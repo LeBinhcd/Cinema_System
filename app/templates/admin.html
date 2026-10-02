@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Quản trị · CineVista{% endblock %}
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">{% endmacro %}
+{% block content %}
+<span class="badge text-bg-warning">ADMIN</span><h1 class="mt-3">Quản lý rạp chiếu</h1>
+{% for category, message in get_flashed_messages(with_categories=true) %}<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>{% endfor %}
+<nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Khu vực quản trị"><a class="btn btn-outline-warning" href="#movies">Phim ({{ movies|length }})</a><a class="btn btn-outline-warning" href="#screenings">Suất chiếu ({{ screenings|length }})</a><a class="btn btn-outline-warning" href="#rooms">Phòng & Ghế ({{ rooms|length }})</a><a class="btn btn-outline-warning" href="#drafts">AI DRAFT ({{ drafts|length }})</a></nav>
+<section id="movies" class="seat-panel p-4 rounded-4 mb-4"><h2 class="h4">Phim</h2>
+<form method="post" action="{{ url_for('pages.add_movie') }}" class="row g-3 mb-4">{{ csrf() }}
+  <div class="col-md-6"><label class="form-label" for="movie-title">Tên phim</label><input id="movie-title" name="title" maxlength="255" class="form-control" required></div>
+  <div class="col-md-3"><label class="form-label" for="movie-age-rating">Giới hạn độ tuổi</label><select id="movie-age-rating" name="age_rating" class="form-select" required><option value="P">P - Mọi lứa tuổi</option><option value="K">K - Trẻ em</option><option value="T13">T13 - Từ 13 tuổi</option><option value="T16">T16 - Từ 16 tuổi</option><option value="T18">T18 - Từ 18 tuổi</option><option value="C">C - Không phổ biến</option></select></div>
+  <div class="col-md-3"><label class="form-label" for="movie-genre">Thể loại</label><input id="movie-genre" name="genre" class="form-control" required></div>
+  <div class="col-md-4"><label class="form-label" for="movie-duration">Thời lượng (phút)</label><input id="movie-duration" type="number" min="1" name="duration" class="form-control" required></div>
+  <div class="col-md-4"><label class="form-label" for="movie-release">Ngày khởi chiếu</label><input id="movie-release" type="date" name="release_date" class="form-control" required></div>
+  <div class="col-md-4"><label class="form-label" for="movie-status">Trạng thái</label><select id="movie-status" name="status" class="form-select"><option value="SHOWING">Đang chiếu</option><option value="COMING_SOON">Sắp chiếu</option><option value="ENDED">Ngừng chiếu</option></select></div>
+  <div class="col-12"><label class="form-label" for="movie-keywords">Từ khóa gợi ý cho AI</label><input id="movie-keywords" name="keywords" maxlength="500" class="form-control" placeholder="tình cảm gia đình, hài hước, bối cảnh Sài Gòn"></div>
+  <div class="col-12"><label class="form-label" for="movie-poster">URL poster (http/https, tùy chọn)</label><input id="movie-poster" type="url" name="poster_url" class="form-control"></div>
+  <div class="col-12"><label class="form-label" for="movie-synopsis">Mô tả phim</label><textarea id="movie-synopsis" name="synopsis" rows="4" class="form-control" required></textarea></div>
+  <div class="col-12"><p class="small text-secondary">AI điền mô tả để xem trước. Lưu chỉ tạo bản nháp chờ duyệt; phim chưa có trong hệ thống để hiển thị hoặc xếp lịch. Kiểm tra và xác nhận tại khu vực Kiểm duyệt AI để thêm phim chính thức.</p><div class="d-flex flex-wrap gap-2 align-items-center"><button type="button" id="generate-movie-description" class="btn btn-outline-info"><span id="movie-description-spinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span><span id="movie-description-label">⚡ AI Tạo Mô Tả</span></button><button type="submit" class="btn btn-warning">Lưu vào Danh sách Chờ Duyệt</button><span id="movie-description-status" class="small text-secondary" role="status" aria-live="polite"></span></div></div></form>
+<div class="table-responsive"><table class="table table-dark table-striped align-middle"><thead><tr><th>Phim / Thể loại</th><th>Ngày phát hành</th><th>Thời lượng / Trạng thái</th><th>Hiển thị trang chủ</th></tr></thead><tbody>
+{% for movie in movies %}<tr><td>{{ movie.title }}<div class="small text-secondary">{{ movie.genres or 'Chưa có thể loại' }}</div></td><td>{{ movie.release_date or '—' }}</td><td><form method="post" action="{{ url_for('pages.edit_movie', movie_id=movie.id) }}" class="d-flex flex-wrap gap-2">{{ csrf() }}<input type="number" min="1" name="duration_minutes" value="{{ movie.duration_minutes }}" class="form-control form-control-sm w-auto" aria-label="Thời lượng {{ movie.title }}" required><select name="status" class="form-select form-select-sm w-auto" aria-label="Trạng thái {{ movie.title }}">{% for option in ['SHOWING','COMING_SOON','ENDED'] %}<option value="{{ option }}" {% if option == movie.status %}selected{% endif %}>{{ option }}</option>{% endfor %}</select><button class="btn btn-outline-warning btn-sm">Lưu</button></form></td><td><form method="post" action="{{ url_for('pages.toggle_movie', movie_id=movie.id) }}">{{ csrf() }}<button class="btn btn-outline-light btn-sm">{{ 'Ngừng chiếu' if movie.status == 'SHOWING' else 'Đang chiếu' }}</button></form></td></tr>{% else %}<tr><td colspan="4">Chưa có phim.</td></tr>{% endfor %}</tbody></table></div></section>
+<section id="screenings" class="seat-panel p-4 rounded-4 mb-4"><h2 class="h4">Suất chiếu</h2><p class="text-secondary">Giờ kết thúc tính từ thời lượng phim. Hai suất trong cùng phòng cần ít nhất 15 phút dọn phòng.</p>
+<form method="post" action="{{ url_for('pages.add_screening') }}" class="row g-3 mb-4">{{ csrf() }}<div class="col-md-4"><label class="form-label" for="screening-movie">Phim</label><select id="screening-movie" name="movie_id" class="form-select" required><option value="">Chọn phim</option>{% for movie in movies %}<option value="{{ movie.id }}">{{ movie.title }} ({{ movie.duration_minutes }} phút)</option>{% endfor %}</select></div><div class="col-md-4"><label class="form-label" for="screening-room">Phòng hoạt động</label><select id="screening-room" name="room_id" class="form-select" required><option value="">Chọn phòng</option>{% for room in rooms if room.status == 'ACTIVE' %}<option value="{{ room.id }}">{{ room.name }}</option>{% endfor %}</select></div><div class="col-md-4"><label class="form-label" for="screening-start">Giờ bắt đầu (giờ địa phương)</label><input id="screening-start" type="datetime-local" name="start_time" class="form-control" required></div><div class="col-12"><button class="btn btn-warning">Thêm suất chiếu</button></div></form>
+<div class="table-responsive"><table class="table table-dark table-striped"><thead><tr><th>ID / Phim</th><th>Phòng</th><th>Bắt đầu</th><th>Kết thúc</th><th>Vé đã bán</th></tr></thead><tbody>{% for show in screenings %}<tr><td>#{{ show.id }} · {{ show.movie_title }}</td><td>{{ show.room_name }}</td><td>{{ show.start_time.strftime('%d/%m/%Y %H:%M') }}</td><td>{{ show.end_time.strftime('%d/%m/%Y %H:%M') }}</td><td>{{ show.sold_tickets }}</td></tr>{% else %}<tr><td colspan="5">Chưa có suất chiếu.</td></tr>{% endfor %}</tbody></table></div></section>
+<section id="rooms" class="seat-panel p-4 rounded-4 mb-4"><h2 class="h4">Phòng & Ghế</h2><p class="text-secondary">A–B Standard, C–D VIP, từ E trở đi Couple. Mặc định 5 × 8 = 40 ghế. Bảo trì ngăn thêm lịch mới, không xóa vé/lịch cũ.</p>
+<form method="post" action="{{ url_for('pages.add_room') }}" class="row g-3 mb-4">{{ csrf() }}<div class="col-md-6"><label class="form-label" for="room-name">Tên phòng</label><input id="room-name" name="name" class="form-control" required></div><div class="col-md-3"><label class="form-label" for="room-rows">Số hàng</label><input id="room-rows" type="number" name="row_count" min="1" max="26" value="5" class="form-control" required></div><div class="col-md-3"><label class="form-label" for="room-columns">Ghế mỗi hàng</label><input id="room-columns" type="number" name="column_count" min="1" max="30" value="8" class="form-control" required></div><div class="col-12"><button class="btn btn-warning">Tạo phòng & ghế</button></div></form>
+<div class="table-responsive"><table class="table table-dark table-striped align-middle"><thead><tr><th>Phòng</th><th>Standard</th><th>VIP</th><th>Couple</th><th>Tổng</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{% for room in rooms %}<tr><td>{{ room.name }} ({{ room.row_count }} × {{ room.column_count }})</td><td>{{ room.standard_seats }}</td><td>{{ room.vip_seats }}</td><td>{{ room.couple_seats }}</td><td>{{ room.total_seats }}</td><td>{{ 'Hoạt động' if room.status == 'ACTIVE' else 'Bảo trì' }}</td><td><form method="post" action="{{ url_for('pages.toggle_room', room_id=room.id) }}">{{ csrf() }}<button class="btn btn-outline-warning btn-sm">{{ 'Bảo trì' if room.status == 'ACTIVE' else 'Mở hoạt động' }}</button></form></td></tr>{% else %}<tr><td colspan="7">Chưa có phòng.</td></tr>{% endfor %}</tbody></table></div></section>
+<section id="ai-center" class="mb-4">
+  <h2 class="h4 mb-4">TRUNG TÂM KIỂM DUYỆT & TRỢ LÝ AI</h2>
+  <div class="row g-4">
+    <div class="col-lg-6"><section id="drafts" class="seat-panel p-4 rounded-4 h-100">
+      <h3 class="h5">KIỂM DUYỆT MÔ TẢ PHIM</h3>
+      <p class="text-secondary">AI DRAFT chờ duyệt: chỉnh sửa trực tiếp trước khi phê duyệt. Văn bản AI gốc được giữ lại; phê duyệt áp dụng nội dung vào phim và lưu người duyệt, thời điểm.</p>
+      {% if drafts %}
+      <label class="form-label" for="draft-select">Chọn phim chờ duyệt:</label>
+      <select id="draft-select" class="form-select mb-3" aria-controls="draft-review-panel">
+        {% for draft in drafts %}<option value="{{ draft.id }}" data-title="{{ draft.movie_title }}" data-genres="{{ draft.genres or 'Chưa có thể loại' }}" data-duration="{{ draft.duration_minutes }}" data-age-rating="{{ draft.age_rating or 'P' }}" data-synopsis="{{ draft.generated_text }}" data-approve-url="{{ url_for('pages.review_draft', draft_id=draft.id, decision='approve') }}" data-reject-url="{{ url_for('pages.review_draft', draft_id=draft.id, decision='reject') }}">{{ draft.movie_title }} - {{ draft.genres or 'Chưa có thể loại' }}</option>{% endfor %}
+      </select>
+      {% set draft = drafts[0] %}
+      <article id="draft-review-panel" class="border-bottom border-secondary py-3">
+        <strong id="draft-movie-title">{{ draft.movie_title }}</strong><p id="draft-movie-details" class="small text-secondary">{{ draft.genres or 'Chưa có thể loại' }} · {{ draft.duration_minutes }} phút · {{ draft.age_rating or 'P' }} · DRAFT</p>
+        <form method="post" action="{{ url_for('pages.review_draft', draft_id=draft.id, decision='approve') }}" class="draft-review-form">{{ csrf() }}
+          <label class="form-label" for="draft-text-{{ draft.id }}">Mô tả có thể chỉnh sửa</label>
+          <textarea id="draft-text-{{ draft.id }}" name="edited_synopsis" rows="6" class="form-control draft-text" required>{{ draft.generated_text }}</textarea>
+          <p class="small draft-word-count mt-2" role="status" aria-live="polite"></p>
+          <div class="d-flex gap-2"><button type="submit" class="btn btn-success btn-sm draft-approve">✓ Xác nhận Thêm Phim / Duyệt</button><button type="submit" class="btn btn-outline-danger btn-sm draft-reject" formnovalidate formaction="{{ url_for('pages.review_draft', draft_id=draft.id, decision='reject') }}">✗ Hủy / Từ chối</button></div>
+        </form>
+      </article>{% else %}<p class="text-secondary">Hiện không có bản nháp phim nào đang chờ duyệt.</p>{% endif %}
+    </section></div>
+    <div class="col-lg-6"><section id="revenue" class="seat-panel p-4 rounded-4 h-100">
+      <h3 class="h5">BÁO CÁO DOANH THU & NHẬN XÉT AI</h3>
+      <form id="revenue-filter" class="row g-3">{{ csrf() }}
+        <div class="col-sm-6"><label for="revenue-from" class="form-label">Ngày bắt đầu</label><input id="revenue-from" type="date" class="form-control" required></div>
+        <div class="col-sm-6"><label for="revenue-to" class="form-label">Ngày kết thúc</label><input id="revenue-to" type="date" class="form-control" required></div>
+        <div class="col-12"><button class="btn btn-warning" type="submit">Xem báo cáo</button></div>
+      </form>
+      <p class="small text-secondary mt-3">Bao gồm hai ngày đầu/cuối. Doanh thu theo ngày giao dịch SUCCESS; số vé theo ngày tạo vé (không gồm vé hủy/giữ); lấp đầy = ghế đã bán / tổng ghế các suất bắt đầu trong kỳ (bình quân gia quyền).</p>
+      <p id="revenue-status" role="status" aria-live="polite" class="small text-secondary"></p>
+      <div class="row g-2 mb-4">
+        <div class="col-12"><div class="border border-secondary rounded p-3">Tổng doanh thu (VNĐ)<strong id="revenue-total" class="d-block fs-4">—</strong></div></div>
+        <div class="col-sm-6"><div class="border border-secondary rounded p-3">Tổng vé đã bán<strong id="revenue-tickets" class="d-block fs-4">—</strong></div></div>
+        <div class="col-sm-6"><div class="border border-secondary rounded p-3">Lấp đầy trung bình<strong id="revenue-occupancy" class="d-block fs-4">—</strong></div></div>
+      </div>
+      <h4 class="h6">Nhận định từ Trợ lý AI <span class="badge text-bg-warning">DRAFT · Nội bộ</span></h4>
+      <button type="button" id="revenue-ai-button" class="btn btn-outline-info" disabled><span id="revenue-ai-spinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span> ⚡ AI Phân tích & Tóm tắt</button>
+      <p id="revenue-ai-summary" class="mt-3" role="status" aria-live="polite">Chọn khoảng ngày và xem báo cáo trước khi phân tích. Nhận xét chỉ là bản xem trước nội bộ, không tự công bố hay lưu vào CSDL.</p>
+    </section></div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const button = document.getElementById('generate-movie-description');
+  if (!button) return;
+  const form = button.closest('form');
+  const title = document.getElementById('movie-title');
+  const rating = document.getElementById('movie-age-rating');
+  const keywords = document.getElementById('movie-keywords');
+  const synopsis = document.getElementById('movie-synopsis');
+  const status = document.getElementById('movie-description-status');
+  const label = document.getElementById('movie-description-label');
+  const spinner = document.getElementById('movie-description-spinner');
+  const saveButton = form.querySelector('[type="submit"]');
+  button.addEventListener('click', async () => {
+    if (!title.value.trim()) { title.focus(); status.textContent = 'Vui lòng nhập tên phim trước.'; status.className = 'small text-danger'; return; }
+    button.disabled = true; saveButton.disabled = true; spinner.classList.remove('d-none'); label.textContent = ' Đang sinh mô tả...'; status.textContent = 'AI đang xử lý...'; status.className = 'small text-info';
+    try {
+      const response = await fetch('{{ url_for("pages.generate_movie_description") }}', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': form.querySelector('[name="csrf_token"]').value}, body: JSON.stringify({title: title.value.trim(), age_rating: rating.value, keywords: keywords.value.trim()})});
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'Không thể sinh mô tả.');
+      synopsis.value = result.description; status.textContent = 'Đã điền mô tả; Admin có thể chỉnh sửa trước khi lưu.'; status.className = 'small text-success';
+    } catch (error) { status.textContent = error.message; status.className = 'small text-danger'; }
+    finally { button.disabled = false; saveButton.disabled = false; spinner.classList.add('d-none'); label.textContent = '⚡ AI Tạo Mô Tả'; }
+  });
+})();
+</script>
+<script>
+(() => {
+  document.querySelectorAll('.draft-review-form').forEach(form => {
+    const textarea = form.querySelector('.draft-text');
+    const counter = form.querySelector('.draft-word-count');
+    const update = () => {
+      const count = textarea.value.trim() ? textarea.value.trim().split(/\s+/u).length : 0;
+      counter.textContent = `${count}/150 từ${count > 150 ? ' — Vượt giới hạn, hãy rút gọn trước khi phê duyệt.' : ''}`;
+      counter.className = `small draft-word-count mt-2 ${count > 150 ? 'text-danger' : 'text-secondary'}`;
+      form.querySelector('.draft-approve').disabled = count === 0 || count > 150;
+    };
+    const select = document.getElementById('draft-select');
+    const edits = new Map();
+    let selectedId = select.value;
+    select.addEventListener('change', () => {
+      edits.set(selectedId, textarea.value);
+      const option = select.selectedOptions[0];
+      selectedId = option.value;
+      document.getElementById('draft-movie-title').textContent = option.dataset.title;
+      document.getElementById('draft-movie-details').textContent = `${option.dataset.genres} · ${option.dataset.duration} phút · ${option.dataset.ageRating} · DRAFT`;
+      textarea.value = edits.has(selectedId) ? edits.get(selectedId) : option.dataset.synopsis;
+      textarea.id = `draft-text-${selectedId}`;
+      form.querySelector('label').htmlFor = textarea.id;
+      form.action = option.dataset.approveUrl;
+      form.querySelector('.draft-reject').formAction = option.dataset.rejectUrl;
+      update();
+    });
+    textarea.addEventListener('input', update); update();
+  });
+  const form = document.getElementById('revenue-filter');
+  const from = document.getElementById('revenue-from');
+  const to = document.getElementById('revenue-to');
+  const status = document.getElementById('revenue-status');
+  const button = document.getElementById('revenue-ai-button');
+  const summary = document.getElementById('revenue-ai-summary');
+  const spinner = document.getElementById('revenue-ai-spinner');
+  const headers = {'X-CSRF-Token': form.querySelector('[name="csrf_token"]').value};
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  from.value = today; to.value = today;
+  let report = null;
+  const render = data => {
+    document.getElementById('revenue-total').textContent = new Intl.NumberFormat('vi-VN').format(data.total_revenue);
+    document.getElementById('revenue-tickets').textContent = new Intl.NumberFormat('vi-VN').format(data.tickets_sold);
+    document.getElementById('revenue-occupancy').textContent = `${data.occupancy_rate}%`;
+  };
+  [from, to].forEach(input => input.addEventListener('change', () => {
+    report = null; button.disabled = true;
+    ['revenue-total', 'revenue-tickets', 'revenue-occupancy'].forEach(id => document.getElementById(id).textContent = '—');
+    summary.textContent = 'Bộ lọc đã đổi; hãy xem báo cáo lại.';
+  }));
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    report = null; button.disabled = true; form.querySelector('button').disabled = true;
+    from.disabled = true; to.disabled = true;
+    status.textContent = 'Đang lấy số liệu...'; summary.textContent = 'Chưa có nhận xét cho báo cáo này.';
+    try {
+      const query = new URLSearchParams({from_date: from.value, to_date: to.value});
+      const response = await fetch(`{{ url_for('pages.revenue_report') }}?${query}`, {headers});
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'Không thể lấy báo cáo.');
+      report = result.report; render(report); button.disabled = false;
+      status.textContent = `Kỳ báo cáo: ${report.from_date} → ${report.to_date}`;
+    } catch (error) { status.textContent = error.message; }
+    finally { form.querySelector('button').disabled = false; from.disabled = false; to.disabled = false; }
+  });
+  button.addEventListener('click', async () => {
+    if (!report) return;
+    button.disabled = true; spinner.classList.remove('d-none'); form.querySelector('button').disabled = true;
+    from.disabled = true; to.disabled = true; summary.textContent = 'AI đang phân tích số liệu...';
+    try {
+      const response = await fetch('{{ url_for("pages.revenue_ai_summary") }}', {method: 'POST', headers: {...headers, 'Content-Type': 'application/json'}, body: JSON.stringify(report)});
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'Không thể phân tích báo cáo.');
+      report = result.report; render(report); summary.textContent = result.summary;
+    } catch (error) { summary.textContent = error.message; }
+    finally { button.disabled = !report; spinner.classList.add('d-none'); form.querySelector('button').disabled = false; from.disabled = false; to.disabled = false; }
+  });
+})();
+</script>
+{% endblock %}

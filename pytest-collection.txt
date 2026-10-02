@@ -1,0 +1,205 @@
+﻿tests/test_admin.py::test_admin_permissions_csrf[/admin/movies/add]
+tests/test_admin.py::test_admin_permissions_csrf[/admin/movies/1/toggle-status]
+tests/test_admin.py::test_admin_permissions_csrf[/admin/screenings/add]
+tests/test_admin.py::test_admin_permissions_csrf[/admin/rooms/add]
+tests/test_admin.py::test_admin_permissions_csrf[/admin/rooms/1/toggle-status]
+tests/test_admin.py::test_admin_permissions_csrf[/admin/drafts/1/approved]
+tests/test_admin.py::test_movies_and_homepage
+tests/test_admin.py::test_room_counts_maintenance_and_rollback
+tests/test_admin.py::test_schedule_both_sides[-105-True]
+tests/test_admin.py::test_schedule_both_sides[-104-False]
+tests/test_admin.py::test_schedule_both_sides[-90-False]
+tests/test_admin.py::test_schedule_both_sides[0-False]
+tests/test_admin.py::test_schedule_both_sides[90-False]
+tests/test_admin.py::test_schedule_both_sides[104-False]
+tests/test_admin.py::test_schedule_both_sides[105-True]
+tests/test_admin.py::test_draft_review_flash_and_audit
+tests/test_admin.py::test_browser_screening_conflict_and_room_creation
+tests/test_admin.py::test_migration_preserves_existing_room
+tests/test_auth_seats.py::test_login_admin_and_logout
+tests/test_auth_seats.py::test_customer_cannot_access_admin
+tests/test_auth_seats.py::test_missing_secret_generates_random_key
+tests/test_auth_seats.py::test_read_only_seat_map
+tests/test_business_fixes.py::test_pos_cutoff_and_disabled_option[14-201]
+tests/test_business_fixes.py::test_pos_cutoff_and_disabled_option[15-409]
+tests/test_business_fixes.py::test_pos_cutoff_and_disabled_option[16-409]
+tests/test_business_fixes.py::test_history_ownership_grouping_and_cancel
+tests/test_business_fixes.py::test_history_customer_only[STAFF]
+tests/test_business_fixes.py::test_history_customer_only[ADMIN]
+tests/test_business_fixes.py::test_history_cancel_eligibility[120-BOOKED-None-True]
+tests/test_business_fixes.py::test_history_cancel_eligibility[59-BOOKED-None-False]
+tests/test_business_fixes.py::test_history_cancel_eligibility[120-USED-2026-01-01-False]
+tests/test_business_fixes.py::test_history_cancel_eligibility[120-BOOKED-2026-01-01-False]
+tests/test_business_fixes.py::test_empty_history_and_couple_rendering
+tests/test_chatbot_api.py::test_valid_question_runs_full_rag_and_returns_backend_cards
+tests/test_chatbot_api.py::test_invalid_question_is_rejected[payload0]
+tests/test_chatbot_api.py::test_invalid_question_is_rejected[payload1]
+tests/test_chatbot_api.py::test_invalid_question_is_rejected[payload2]
+tests/test_chatbot_api.py::test_invalid_question_is_rejected[payload3]
+tests/test_chatbot_api.py::test_non_json_body_is_rejected
+tests/test_chatbot_api.py::test_no_results_returns_empty_cards
+tests/test_chatbot_api.py::test_gemini_failure_is_safe_500
+tests/test_chatbot_api.py::test_cards_are_not_changed_by_answer
+tests/test_chatbot_api.py::test_gemini_error_fallback_returns_200
+tests/test_chatbot_api.py::test_csrf_required
+tests/test_chatbot_api.py::test_length_300_is_accepted
+tests/test_chatbot_api.py::test_wrong_json_types[payload0]
+tests/test_chatbot_api.py::test_wrong_json_types[payload1]
+tests/test_chatbot_api.py::test_wrong_json_types[payload2]
+tests/test_chatbot_api.py::test_wrong_json_types[payload3]
+tests/test_chatbot_api.py::test_real_pipeline_with_mock_anthropic
+tests/test_chatbot_ui.py::test_shared_widget_on_anonymous_pages[/]
+tests/test_chatbot_ui.py::test_shared_widget_on_anonymous_pages[/movies]
+tests/test_chatbot_ui.py::test_shared_widget_on_anonymous_pages[/login]
+tests/test_chatbot_ui.py::test_page_csrf_token_works_for_anonymous_chat
+tests/test_chatbot_ui.py::test_widget_assets_are_served[/static/css/chatbot.css-text/css]
+tests/test_chatbot_ui.py::test_widget_assets_are_served[/static/js/chatbot.js-javascript]
+tests/test_context_builder.py::test_exact_compact_context
+tests/test_context_builder.py::test_empty_context
+tests/test_context_builder.py::test_order_and_all_five_results_preserved
+tests/test_context_builder.py::test_no_input_mutation_or_intent_facts
+tests/test_context_builder.py::test_missing_price_policy_never_invented[intent0-Gi\xe1 v\xe9: ch\u01b0a c\xf3 d\u1eef li\u1ec7u gi\xe1]
+tests/test_context_builder.py::test_missing_price_policy_never_invented[intent1-Gi\xe1 v\xe9: ch\u01b0a c\xf3 d\u1eef li\u1ec7u gi\xe1]
+tests/test_context_builder.py::test_missing_price_policy_never_invented[intent2-Ch\xednh s\xe1ch: ch\u01b0a c\xf3 d\u1eef li\u1ec7u ch\xednh s\xe1ch]
+tests/test_context_builder.py::test_missing_price_policy_never_invented[intent3-Ch\xednh s\xe1ch: ch\u01b0a c\xf3 d\u1eef li\u1ec7u ch\xednh s\xe1ch]
+tests/test_context_builder.py::test_no_unrequested_notices
+tests/test_context_builder.py::test_allowlist_excludes_sensitive_and_unretrieved_fields
+tests/test_context_builder.py::test_strings_are_losslessly_quoted_not_normalized
+tests/test_context_builder.py::test_optional_fields_not_invented
+tests/test_context_builder.py::test_missing_required_fields_fail_closed[movie_title]
+tests/test_context_builder.py::test_missing_required_fields_fail_closed[room_name]
+tests/test_context_builder.py::test_missing_required_fields_fail_closed[start_time]
+tests/test_context_builder.py::test_missing_required_fields_fail_closed[end_time]
+tests/test_context_builder.py::test_missing_required_fields_fail_closed[available_seats]
+tests/test_context_builder.py::test_invalid_text_fails_closed[None]
+tests/test_context_builder.py::test_invalid_text_fails_closed[]
+tests/test_context_builder.py::test_invalid_text_fails_closed[   ]
+tests/test_context_builder.py::test_invalid_text_fails_closed[19]
+tests/test_context_builder.py::test_invalid_text_fails_closed[value4]
+tests/test_context_builder.py::test_seats_never_coerced_or_defaulted[None]
+tests/test_context_builder.py::test_seats_never_coerced_or_defaulted[-1]
+tests/test_context_builder.py::test_seats_never_coerced_or_defaulted[1.5]
+tests/test_context_builder.py::test_seats_never_coerced_or_defaulted[2]
+tests/test_context_builder.py::test_seats_never_coerced_or_defaulted[True]
+tests/test_context_builder.py::test_missing_seat_type_is_not_zero
+tests/test_context_builder.py::test_invalid_screenings_container[None]
+tests/test_context_builder.py::test_invalid_screenings_container[rows1]
+tests/test_context_builder.py::test_invalid_screenings_container[text]
+tests/test_context_builder.py::test_invalid_screenings_container[rows3]
+tests/test_context_builder.py::test_invalid_screenings_container[rows4]
+tests/test_context_builder.py::test_invalid_screenings_container[rows5]
+tests/test_context_builder.py::test_invalid_intent[raw question]
+tests/test_context_builder.py::test_invalid_intent[intent1]
+tests/test_context_builder.py::test_invalid_intent[True]
+tests/test_context_builder.py::test_invalid_screening_id[None]
+tests/test_context_builder.py::test_invalid_screening_id[0]
+tests/test_context_builder.py::test_invalid_screening_id[-1]
+tests/test_context_builder.py::test_invalid_screening_id[True]
+tests/test_context_builder.py::test_invalid_screening_id[100]
+tests/test_core.py::test_admin_header_does_not_grant_access
+tests/test_core.py::test_ai_description_remains_draft
+tests/test_core.py::test_cleanup_boundary
+tests/test_gemini_service.py::test_success_uses_env_key_model_and_fifteen_second_timeout
+tests/test_gemini_service.py::test_missing_key_returns_safe_message
+tests/test_gemini_service.py::test_provider_errors_are_safe[error0]
+tests/test_gemini_service.py::test_provider_errors_are_safe[error1]
+tests/test_gemini_service.py::test_provider_errors_are_safe[error2]
+tests/test_gemini_service.py::test_empty_provider_response_is_safe
+tests/test_gemini_service.py::test_invalid_prompt_fails_before_provider_call[None]
+tests/test_gemini_service.py::test_invalid_prompt_fails_before_provider_call[]
+tests/test_gemini_service.py::test_invalid_prompt_fails_before_provider_call[   ]
+tests/test_gemini_service.py::test_function_wrapper_uses_environment
+tests/test_gemini_service.py::test_invalid_timeout[0]
+tests/test_gemini_service.py::test_invalid_timeout[-1]
+tests/test_gemini_service.py::test_invalid_timeout[None]
+tests/test_gemini_service.py::test_invalid_timeout[True]
+tests/test_gemini_service.py::test_invalid_timeout[8]
+tests/test_gemini_service.py::test_invalid_timeout[nan]
+tests/test_gemini_service.py::test_invalid_timeout[inf]
+tests/test_gemini_service.py::test_smaller_timeout_and_alias
+tests/test_gemini_service.py::test_malformed_response_is_safe[None]
+tests/test_gemini_service.py::test_malformed_response_is_safe[response1]
+tests/test_gemini_service.py::test_malformed_response_is_safe[response2]
+tests/test_gemini_service.py::test_provider_exception_details_never_leak
+tests/test_gemini_service.py::test_missing_model_does_not_call_sdk
+tests/test_gemini_service.py::test_sdk_initialization_error_is_safe
+tests/test_gemini_service.py::test_default_model_and_no_gemini_key_fallback
+tests/test_gemini_service.py::test_multiple_text_blocks
+tests/test_gemini_service.py::test_groq_exceptions_are_logged_safely[AuthenticationError]
+tests/test_gemini_service.py::test_groq_exceptions_are_logged_safely[RateLimitError]
+tests/test_gemini_service.py::test_groq_exceptions_are_logged_safely[APIConnectionError]
+tests/test_payment_ticket.py::test_payment_and_ticket_access
+tests/test_payment_ticket.py::test_cancel_releases_and_checkin_once
+tests/test_payment_ticket.py::test_migration_existing_schema_is_idempotent
+tests/test_prompt_builder.py::test_build_prompt_contains_rules_context_and_question
+tests/test_prompt_builder.py::test_prompt_preserves_context_and_question_losslessly
+tests/test_prompt_builder.py::test_prompt_rejects_empty_inputs[context-   ]
+tests/test_prompt_builder.py::test_prompt_rejects_empty_inputs[context-]
+tests/test_prompt_builder.py::test_empty_context_keeps_no_results_rule
+tests/test_prompt_builder.py::test_untrusted_text_cannot_add_unquoted_sections
+tests/test_prompt_builder.py::test_prompt_rejects_non_string_inputs[None]
+tests/test_prompt_builder.py::test_prompt_rejects_non_string_inputs[value1]
+tests/test_prompt_builder.py::test_prompt_rejects_non_string_inputs[1]
+tests/test_question_analyzer.py::test_required_example
+tests/test_question_analyzer.py::test_skill_rules[H\xf4m nay c\xf3 phim g\xec?-date-2026-09-30]
+tests/test_question_analyzer.py::test_skill_rules[Ng\xe0y mai c\xf3 phim g\xec?-date-2026-10-01]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o bu\u1ed5i s\xe1ng?-min_time-08:00]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o bu\u1ed5i s\xe1ng?-max_time-11:59]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o bu\u1ed5i chi\u1ec1u?-max_time-17:59]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o bu\u1ed5i t\u1ed1i?-time_of_day-EVENING]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o sau 19h30?-min_time-19:30]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o tr\u01b0\u1edbc 20:30?-max_time-20:30]
+tests/test_question_analyzer.py::test_skill_rules[Phim Conan t\u1ed1i nay c\xf2n gh\u1ebf VIP kh\xf4ng?-movie_title-Conan]
+tests/test_question_analyzer.py::test_skill_rules[C\xf2n gh\u1ebf VIP kh\xf4ng?-seat_type-VIP]
+tests/test_question_analyzer.py::test_skill_rules[C\xf2n gh\u1ebf \u0111\xf4i kh\xf4ng?-seat_type-COUPLE]
+tests/test_question_analyzer.py::test_skill_rules[C\xf2n gh\u1ebf th\u01b0\u1eddng kh\xf4ng?-seat_type-STANDARD]
+tests/test_question_analyzer.py::test_skill_rules[Gi\xe1 v\xe9 bao nhi\xeau?-price_inquiry-True]
+tests/test_question_analyzer.py::test_skill_rules[H\u1ee7y v\xe9 \u0111\u01b0\u1ee3c ho\xe0n ti\u1ec1n kh\xf4ng?-policy_inquiry-True]
+tests/test_question_analyzer.py::test_skill_rules[-intent-UNKNOWN]
+tests/test_question_analyzer.py::test_skill_rules[Th\u1eddi ti\u1ebft h\xf4m nay th\u1ebf n\xe0o?-intent-UNKNOWN]
+tests/test_question_analyzer.py::test_skill_rules[Cho t\xf4i bi\u1ebft th\xeam \u0111i.-intent-AMBIGUOUS]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o?-movie_title-None]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o?-genre-None]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o?-date-None]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o?-min_time-None]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o bu\u1ed5i s\xe1ng sau 10h?-min_time-10:00]
+tests/test_question_analyzer.py::test_skill_rules[Phim n\xe0o bu\u1ed5i s\xe1ng sau 19h?-intent-AMBIGUOUS]
+tests/test_question_analyzer.py::test_timezone_conversion
+tests/test_question_analyzer.py::test_word_boundaries
+tests/test_question_analyzer.py::test_json_serializable
+tests/test_screening_retriever.py::test_retrieves_filters_and_exact_availability
+tests/test_screening_retriever.py::test_expired_holds_are_available_and_date_time_filters_work
+tests/test_screening_retriever.py::test_empty_result_and_limit
+tests/test_screening_retriever.py::test_intent_values_are_parameters_not_sql
+tests/test_screening_retriever.py::test_limit_is_five_and_sorted
+tests/test_screening_retriever.py::test_filter_combinations[filters0-expected0]
+tests/test_screening_retriever.py::test_filter_combinations[filters1-expected1]
+tests/test_screening_retriever.py::test_filter_combinations[filters2-expected2]
+tests/test_screening_retriever.py::test_filter_combinations[filters3-expected3]
+tests/test_screening_retriever.py::test_filter_combinations[filters4-expected4]
+tests/test_screening_retriever.py::test_filter_combinations[filters5-expected5]
+tests/test_screening_retriever.py::test_filter_combinations[filters6-expected6]
+tests/test_screening_retriever.py::test_filter_combinations[filters7-expected7]
+tests/test_screening_retriever.py::test_filter_combinations[filters8-expected8]
+tests/test_screening_retriever.py::test_filter_combinations[filters9-expected9]
+tests/test_screening_retriever.py::test_filter_combinations[filters10-expected10]
+tests/test_screening_retriever.py::test_filter_combinations[filters11-expected11]
+tests/test_screening_retriever.py::test_filter_combinations[filters12-expected12]
+tests/test_screening_retriever.py::test_filter_combinations[filters13-expected13]
+tests/test_screening_retriever.py::test_invalid_filters_are_not_silently_ignored[filters0]
+tests/test_screening_retriever.py::test_invalid_filters_are_not_silently_ignored[filters1]
+tests/test_screening_retriever.py::test_invalid_filters_are_not_silently_ignored[filters2]
+tests/test_screening_retriever.py::test_invalid_filters_are_not_silently_ignored[filters3]
+tests/test_screening_retriever.py::test_invalid_filters_are_not_silently_ignored[filters4]
+tests/test_screening_retriever.py::test_invalid_filters_are_not_silently_ignored[filters5]
+tests/test_screening_retriever.py::test_invalid_filters_are_not_silently_ignored[filters6]
+tests/test_screening_retriever.py::test_counts_are_distinct_scoped_and_holds_are_read_only
+tests/test_screening_retriever.py::test_nonblocking_statuses_and_missing_seat_type
+tests/test_screening_retriever.py::test_public_movies_and_active_rooms_only
+tests/test_screening_retriever.py::test_timezone_and_analyzer_integration
+tests/test_screening_retriever.py::test_database_errors_are_not_empty_results
+tests/test_staff.py::test_counter_sale_lookup_refund
+tests/test_staff.py::test_counter_cancel_releases_seats
+tests/test_staff.py::test_counter_rejects_invalid_seat_ids
+
+203 tests collected in 0.27s

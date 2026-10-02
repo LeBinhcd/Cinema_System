@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Lịch sử vé của tôi · CineVista{% endblock %}
+{% block content %}
+<h1 class="mb-4">Lịch sử vé của tôi</h1>
+<p id="history-result" role="status"></p>
+<div class="row g-4">
+{% for ticket in tickets %}
+  <div class="col-md-6"><article class="ticket-card h-100 p-4 rounded-4">
+    <h2 class="h4">{{ ticket.movie_title }}</h2>
+    <p>{{ ticket.room_name }} · {{ ticket.start_time }}</p>
+    <p>Đặt lúc: {{ ticket.created_at }}</p>
+    <p class="ticket-code">Mã đặt chỗ: <strong>{{ ticket.booking_code }}</strong></p>
+    <p>Ghế: {% for seat in ticket.seats %}{{ seat.row_label }}{{ seat.seat_number }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+    <p>Tổng tiền: <strong>{{ '{:,.0f}'.format(ticket.price) }} VNĐ</strong></p>
+    <p>Trạng thái: <span class="badge {% if ticket.status == 'CANCELLED' %}bg-danger{% elif ticket.status == 'USED' %}bg-secondary{% else %}bg-success{% endif %}">{{ ticket.status }}</span> · {{ ticket.payment_status or 'Chưa có thanh toán' }}</p>
+    <a class="btn btn-outline-warning" href="{{ url_for('pages.ticket', booking_code=ticket.booking_code) }}">Xem chi tiết / QR</a>
+    {% if ticket.can_cancel %}<button type="button" class="btn btn-outline-danger cancel-ticket" data-code="{{ ticket.booking_code }}">Hủy vé</button>{% endif %}
+  </article></div>
+{% else %}
+  <div class="col-12"><div class="seat-panel p-4 rounded-4"><p>Bạn chưa có vé nào.</p><a class="btn btn-warning" href="{{ url_for('pages.index') }}">Đặt vé ngay</a></div></div>
+{% endfor %}
+</div>
+<p class="text-secondary mt-4">Có thể hủy vé đã thanh toán, chưa check-in khi còn ít nhất 60 phút trước giờ chiếu. Hoàn tiền được giả lập.</p>
+{% endblock %}
+{% block scripts %}<script>
+document.querySelectorAll('.cancel-ticket').forEach(button=>button.onclick=async()=>{
+  if(!confirm('Hủy toàn bộ vé trong đơn và hoàn tiền giả lập?'))return;
+  button.disabled=true;
+  const message=document.getElementById('history-result');
+  try{
+    const response=await fetch({{ url_for('pages.cancel_ticket')|tojson }},{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':{{ session.csrf_token|tojson }}},body:JSON.stringify({booking_code:button.dataset.code})});
+    const data=await response.json();
+    if(response.ok){location.reload();return;}
+    message.textContent=data.error||'Không thể hủy vé.';
+  }catch(_){message.textContent='Không thể kết nối máy chủ.';}
+  button.disabled=false;
+});
+</script>{% endblock %}

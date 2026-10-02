@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Quầy nhân viên · CineVista{% endblock %}
+{% block content %}
+<h1>Quầy nhân viên</h1><ul class="nav nav-tabs mb-4"><li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pos">Quầy bán vé nhanh</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#gate">Soát vé & Check-in</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#support">Tra cứu & Hỗ trợ</button></li></ul>
+<div class="tab-content"><section id="pos" class="tab-pane fade show active seat-panel p-4 rounded-4"><h2 class="h4">Bán vé tại quầy</h2><label class="form-label">Suất chiếu hôm nay</label><select id="pos-show" class="form-select"><option value="">Chọn suất</option>{% for s in screenings %}<option value="{{ s.id }}" {% if not s.sales_open %}disabled data-closed="true" class="text-secondary"{% endif %}>{{ s.movie_title }} · {{ s.start_time }} · {{ s.room_name }}{% if not s.sales_open %} · Đã đóng bán{% endif %}</option>{% endfor %}</select><div id="pos-map" class="my-4"></div><div class="row g-3"><div class="col-md-4"><label class="form-label">Tên khách</label><input id="pos-name" class="form-control"></div><div class="col-md-4"><label class="form-label">SĐT (tùy chọn)</label><input id="pos-phone" class="form-control"></div><div class="col-md-4"><label class="form-label">Thanh toán</label><select id="pos-method" class="form-select"><option value="CASH">Tiền mặt</option><option value="BANKING">Chuyển khoản QR</option></select></div></div><button id="pos-sell" class="btn btn-warning mt-3" disabled>Bán vé</button><p id="pos-result" role="status"></p></section>
+{% include '_seat_legend.html' %}
+<section id="gate" class="tab-pane fade seat-panel p-4 rounded-4"><h2 class="h4">Kiểm tra & Check-in</h2><form id="checkin"><input id="gate-code" class="form-control mb-2" placeholder="Mã đặt chỗ hoặc mã QR" required><button class="btn btn-success">Xác nhận Check-in</button></form><div id="gate-result" class="mt-3" role="status"></div></section>
+<section id="support" class="tab-pane fade seat-panel p-4 rounded-4"><h2 class="h4">Tra cứu lịch sử vé</h2><form method="get" class="d-flex gap-2 mb-3"><input class="form-control" name="q" value="{{ query }}" placeholder="Số điện thoại / mã đặt chỗ"><button class="btn btn-warning">Tra cứu</button></form>{% for t in tickets %}<article class="border rounded p-3 mb-2"><strong>{{ t.movie_title }}</strong> · {{ t.room_name }} · {{ t.start_time }}<br>Ghế: {% for s in t.seats %}{{ s.row_label }}{{ s.seat_number }} {% endfor %} · {{ '{:,.0f}'.format(t.price) }} VNĐ<br>Mã: {{ t.booking_code }} · {{ t.status }} / {{ t.payment_status }}<br><button class="btn btn-outline-light btn-sm print-ticket" data-code="{{ t.booking_code }}">In vé</button>{% if t.can_cancel %}<button class="btn btn-outline-danger btn-sm cancel-ticket" data-code="{{ t.booking_code }}">Hỗ trợ hủy</button>{% endif %}</article>{% else %}<p>Chưa có kết quả.</p>{% endfor %}</section></div><div id="print-slip" class="print-slip"></div>
+{% endblock %}
+{% block scripts %}<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script>
+const headers={'Content-Type':'application/json','X-CSRF-Token':{{ session.csrf_token|tojson }}},chosen=new Set();
+const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const posShows={{ screenings|tojson }},showSelect=document.getElementById('pos-show');
+function refreshSales(){
+  const now=Date.now();
+  for(const show of posShows){
+    const option=showSelect.querySelector('option[value="'+show.id+'"]');
+    if(!show.sales_open||now>=new Date(show.sales_cutoff).getTime()){
+      option.disabled=true;option.classList.add('text-secondary');
+      if(!option.dataset.closed){option.textContent+=' · Đã đóng bán';option.dataset.closed='true';}
+      if(showSelect.value===String(show.id)){
+        showSelect.value='';chosen.clear();document.getElementById('pos-map').innerHTML='';
+        document.getElementById('pos-sell').disabled=true;
+        document.getElementById('pos-result').textContent='Suất chiếu đã quá thời gian mở bán (quá 15 phút kể từ giờ bắt đầu).';
+      }
+    }
+  }
+}
+refreshSales();setInterval(refreshSales,1000);
+showSelect.onchange=async e=>{
+  refreshSales();chosen.clear();document.getElementById('pos-sell').disabled=true;
+  const box=document.getElementById('pos-map'),showId=e.target.value;
+  box.innerHTML='';if(!showId)return;
+  try{
+    const r=await fetch('/api/staff/pos/screening/'+showId+'/seats'),d=await r.json();
+    if(showSelect.value!==showId)return;
+    if(!r.ok){document.getElementById('pos-result').textContent=d.error||'Không tải được sơ đồ ghế.';return;}
+    box.innerHTML='<div class="screen mb-4 mx-auto">MÀN HÌNH</div><div class="seat-grid" style="--columns:'+Number(d.column_count)+'">'+d.seats.map(s=>'<button type="button" class="seat seat-'+escapeHtml(s.status).toLowerCase()+' '+escapeHtml(s.seat_type).toLowerCase()+'" data-id="'+Number(s.id)+'" title="'+escapeHtml(s.seat_type)+' · '+escapeHtml(s.status)+'" '+(s.status!=='AVAILABLE'?'disabled':'')+'>'+escapeHtml(s.row_label)+escapeHtml(s.seat_number)+'</button>').join('')+'</div>';
+    box.querySelectorAll('.seat').forEach(b=>b.onclick=()=>{if(chosen.has(b.dataset.id)){chosen.delete(b.dataset.id);b.classList.remove('selected')}else if(chosen.size<4){chosen.add(b.dataset.id);b.classList.add('selected')}else alert('Tối đa 4 ghế');document.getElementById('pos-sell').disabled=!chosen.size});
+  }catch(_){document.getElementById('pos-result').textContent='Không thể kết nối máy chủ.';}
+};
+document.getElementById('pos-sell').onclick=async()=>{const b=document.getElementById('pos-sell');b.disabled=true;const r=await fetch('/api/staff/pos/sell',{method:'POST',headers,body:JSON.stringify({screening_id:Number(document.getElementById('pos-show').value),seat_ids:[...chosen].map(Number),name:document.getElementById('pos-name').value,phone:document.getElementById('pos-phone').value,payment_method:document.getElementById('pos-method').value})}),d=await r.json(),msg=document.getElementById('pos-result');msg.textContent=d.error||('Đã bán vé '+d.booking_code);if(r.ok){const button=document.createElement('button');button.className='btn btn-outline-light btn-sm ms-2';button.textContent='In vé';button.onclick=()=>printTicket(d.booking_code);msg.append(button)}else b.disabled=false};
+document.getElementById('checkin').onsubmit=async e=>{e.preventDefault();const r=await fetch('/api/staff/check-in',{method:'POST',headers,body:JSON.stringify({query:document.getElementById('gate-code').value})}),d=await r.json(),box=document.getElementById('gate-result');box.className=r.ok?'alert alert-success mt-3':'alert alert-danger mt-3';box.textContent=d.message||d.error;if(d.ticket)box.textContent+=' · '+d.ticket.movie_title+' · '+d.ticket.room_name+' · '+d.ticket.start_time+' · '+d.ticket.seats.map(s=>s.row_label+s.seat_number).join(', ')};
+async function printTicket(code){const r=await fetch('/api/staff/ticket/'+encodeURIComponent(code)),t=await r.json(),el=document.getElementById('print-slip');el.innerHTML='<h2>CINEVISTA</h2><h3>'+escapeHtml(t.movie_title)+'</h3><p>'+escapeHtml(t.start_time)+' · '+escapeHtml(t.room_name)+'</p><p>Ghế: '+t.seats.map(s=>escapeHtml(s.row_label)+escapeHtml(s.seat_number)).join(', ')+'</p><p>Mã: '+escapeHtml(t.booking_code)+'</p><p>Tổng: '+escapeHtml(new Intl.NumberFormat('vi-VN').format(t.price))+' VNĐ</p><div id="print-qr"></div><p>Nhân viên quầy · '+escapeHtml(t.payment_status)+'</p>';new QRCode(document.getElementById('print-qr'),{text:t.booking_code,width:150,height:150});window.print()}document.querySelectorAll('.print-ticket').forEach(b=>b.onclick=()=>printTicket(b.dataset.code));document.querySelectorAll('.cancel-ticket').forEach(b=>b.onclick=async()=>{if(!confirm('Hủy và hoàn tiền đơn này?'))return;const r=await fetch('/api/staff/cancel',{method:'POST',headers,body:JSON.stringify({booking_code:b.dataset.code})}),d=await r.json();alert(d.message||d.error);if(r.ok)location.reload()});
+</script>{% endblock %}

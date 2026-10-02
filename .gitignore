@@ -1,0 +1,11 @@
+﻿__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+*.log
+cinema.db
+cinema.db-journal
+cinema.db-wal
+cinema.db-shm

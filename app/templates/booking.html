@@ -1,0 +1,18 @@
+{% extends 'base.html' %}{% block title %}Sơ đồ ghế · CineVista{% endblock %}
+{% block content %}<a href="{{ url_for('pages.index') }}" class="text-warning text-decoration-none">← Về trang chủ</a><h1 class="mt-3">{{ screening.movie_title }}</h1><p class="text-secondary">{{ screening.room_name }} · {{ screening.start_time.strftime('%d/%m/%Y lúc %H:%M') }}</p>
+<div class="alert alert-warning">Giữ ghế 5 phút và chuyển sang thanh toán giả lập để nhận vé.</div>
+<div class="seat-panel p-4 rounded-4"><div class="screen mb-5 mx-auto">MÀN HÌNH</div><div class="seat-grid" style="--columns: {{ screening.column_count }};">{% for seat in screening.seats %}<button type="button" data-seat="{{ seat.id }}" data-type="{{ seat.seat_type }}" class="seat seat-{{ seat.status|lower }} {{ seat.seat_type|lower }}" {% if seat.status != 'AVAILABLE' %}disabled{% endif %} title="{{ seat.row_label }}{{ seat.seat_number }} · {{ seat.seat_type }} · {{ seat.status }}">{{ seat.row_label }}{{ seat.seat_number }}</button>{% endfor %}</div>
+{% include '_seat_legend.html' %}
+<div class="mt-4 text-center border-top border-secondary pt-4">
+  <p>Ghế chọn (tối đa 4): <strong id="selected-seats">Chưa chọn</strong></p>
+  <p>Tạm tính: <strong id="total">0 VNĐ</strong></p>
+  <button type="button" id="hold" class="btn btn-warning px-5" disabled>Thanh toán</button>
+  <p id="status" role="status" class="mt-3 mb-0"></p>
+</div></div>
+{% endblock %}
+{% block scripts %}<script>
+const selected=new Map(),prices={{ prices|tojson }};
+const status=document.getElementById('status'),hold=document.getElementById('hold');
+document.querySelectorAll('[data-seat]').forEach(seat=>seat.addEventListener('click',()=>{const id=Number(seat.dataset.seat);if(selected.has(id)){selected.delete(id);seat.classList.remove('selected');}else if(selected.size<4){selected.set(id,seat);seat.classList.add('selected');}else{status.textContent='Chỉ chọn tối đa 4 ghế.';return;}document.getElementById('selected-seats').textContent=[...selected.values()].map(s=>s.textContent.trim()).join(', ')||'Chưa chọn';document.getElementById('total').textContent=new Intl.NumberFormat('vi-VN').format([...selected.values()].reduce((sum,s)=>sum+prices[s.dataset.type],0))+' VNĐ';hold.disabled=!selected.size;status.textContent='';}));
+hold.addEventListener('click',async()=>{if(!selected.size)return;hold.disabled=true;try{const res=await fetch('{{ url_for("pages.hold_seat") }}',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':'{{ session.csrf_token }}'},body:JSON.stringify({screening_id:{{ screening.id }},seat_ids:[...selected.keys()]})});const data=await res.json();status.textContent=data.message||data.error;if(!res.ok){hold.disabled=false;return;}window.location.href=data.checkout_url;}catch(_){status.textContent='Không thể kết nối máy chủ';hold.disabled=false;}});
+</script>{% endblock %}
