@@ -1,0 +1,14 @@
+﻿@startuml
+title UC09 - Hoạt động: Quét QR soát vé [FR-09]
+start
+:Nhân viên - Quét QR hoặc tra cứu có xác thực;
+:Kiểm tra Vé đã thanh toán, đúng suất/phòng/ghế, chưa hủy/chưa dùng;
+if (Đủ điều kiện?) then (Có)
+  :Ghi check-in một lần; cho vào;
+  :Thông báo thành công;
+else (Không)
+  :Từ chối QR lỗi/HELD/hủy/đã dùng/sai thông tin;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

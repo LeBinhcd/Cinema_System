@@ -1,0 +1,29 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "Nhân viên" as Staff
+
+rectangle "Phân hệ Nhân viên" {
+  usecase "UC05\nXem lịch và sơ đồ ghế\n[FR-05]" as UC05
+  usecase "UC07\nHủy vé đã thanh toán\n[FR-07]" as UC07
+  usecase "UC09\nQuét QR check-in\n[FR-09]" as UC09
+  usecase "UC10\nTra cứu vé và lịch chiếu\n[FR-10]" as UC10
+  usecase "UC13\nĐăng nhập và phân quyền\n[FR-13]" as UC13
+}
+
+Staff -- UC05
+Staff -- UC07 : hỗ trợ theo quyền
+Staff -- UC09
+Staff -- UC10
+Staff -- UC13
+
+' --- QUAN HỆ INCLUDE ---
+UC09 ..> UC13 : <<include>>
+UC10 ..> UC13 : <<include>>
+UC07 ..> UC13 : <<include>>
+
+' --- QUAN HỆ EXTEND ---
+UC07 ..> UC10 : <<extend>>\n(hỗ trợ hủy vé từ màn tra cứu)
+@enduml

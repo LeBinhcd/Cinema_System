@@ -1,0 +1,14 @@
+﻿@startuml
+title UC05 - Hoạt động: Xem lịch và sơ đồ ghế [FR-05]
+start
+:Khách hàng / Nhân viên - Lọc phim/suất và xem ghế;
+:Kiểm tra Suất tồn tại, đúng quyền;
+if (Đủ điều kiện?) then (Có)
+  :Hiển thị AVAILABLE, HELD, SOLD;
+  :Thông báo thành công;
+else (Không)
+  :Không cho chọn ghế vừa HELD/SOLD;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

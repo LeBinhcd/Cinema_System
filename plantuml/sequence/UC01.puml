@@ -1,0 +1,19 @@
+﻿@startuml
+title UC01 - Quản lý phim và mô tả AI [FR-01]
+actor "Admin" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Nhập/sửa phim và yêu cầu mô tả
+UI -> App: Yêu cầu UC01
+App -> App: Kiểm tra Admin có quyền; phim hợp lệ
+alt Đủ điều kiện
+  App -> App: Lưu phim; AI tạo bản nháp dưới 150 từ chờ UC12
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Từ chối dữ liệu sai/thiếu quyền; không công bố bản nháp
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

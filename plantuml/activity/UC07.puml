@@ -1,0 +1,14 @@
+﻿@startuml
+title UC07 - Hoạt động: Hủy vé [FR-07]
+start
+:Khách hàng / Nhân viên hỗ trợ - Xác thực và yêu cầu hủy vé;
+:Kiểm tra Còn ít nhất 60 phút; vé chưa check-in;
+if (Đủ điều kiện?) then (Có)
+  :Hủy vé, giải phóng ghế; xử lý tiền theo chính sách;
+  :Thông báo thành công;
+else (Không)
+  :Từ chối vé không hợp lệ/đã dùng/quá hạn;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

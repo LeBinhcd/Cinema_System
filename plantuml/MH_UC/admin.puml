@@ -1,0 +1,36 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "Admin" as Admin
+actor "Phân hệ AI\n(hỗ trợ)" as AI <<System>>
+
+rectangle "Phân hệ Quản trị viên (Admin)" {
+  usecase "UC01\nQuản lý phim và mô tả AI\n[FR-01]" as UC01
+  usecase "UC02\nQuản lý phòng chiếu và ghế\n[FR-02]" as UC02
+  usecase "UC03\nThiết lập suất chiếu\n[FR-03]" as UC03
+  usecase "UC04\nĐịnh giá và hiển thị tổng tiền\n[FR-04]" as UC04
+  usecase "UC11\nBáo cáo doanh thu và AI tóm tắt\n[FR-11]" as UC11
+  usecase "UC12\nKiểm duyệt nội dung AI\n[FR-12]" as UC12
+  usecase "UC13\nĐăng nhập và phân quyền\n[FR-13]" as UC13
+}
+
+Admin -- UC01
+Admin -- UC02
+Admin -- UC03
+Admin -- UC04
+Admin -- UC11
+Admin -- UC12
+Admin -- UC13
+
+AI -- UC01 : soạn nháp
+AI -- UC11 : tóm tắt nháp
+
+' --- QUAN HỆ INCLUDE ---
+UC12 ..> UC13 : <<include>>
+
+' --- QUAN HỆ EXTEND ---
+UC12 ..> UC01 : <<extend>>\n(khi AI tạo bản nháp mô tả phim)
+UC12 ..> UC11 : <<extend>>\n(khi AI tạo bản tóm tắt báo cáo)
+@enduml

@@ -1,0 +1,200 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+
+' --- LỚP DỊCH VỤ / TÍCH HỢP AI ---
+class DichVuTroLyAI {
+  - khoaketNoiAPI: Chuoi(255)
+  - tenMoHinh: Chuoi(50)
+  + sinhMoTaPhim(tenPhim, tuKhoa): Chuoi
+  + tomTatDoanhThu(duLieuDoanhThuJson): Chuoi
+  + goiYPhimChoKhachHang(maNguoiDung): DanhSach<Phim>
+}
+
+' --- CÁC LỚP THỰC THỂ NGUỒN (ENTITIES) ---
+class NguoiDung {
+  - maNguoiDung: SoNguyen
+  - hoTen: Chuoi(150)
+  - soDienThoai: Chuoi(20)
+  - matKhau: Chuoi(255)
+  - vaiTro: PhieuVaiTro
+  - ngayTao: NgayGio
+  - ngayCapNhat: NgayGio
+  + xacThuc(soDienThoai, matKhau): LuanLy
+  + dangKy(soDienThoai, hoTen, matKhau): NguoiDung
+  + traCuuLichSuVe(): DanhSach<VeXemPhim>
+}
+
+class Phim {
+  - maPhim: SoNguyen
+  - tenPhim: Chuoi(255)
+  - thoiLuong: SoNguyen
+  - doTuoi: Chuoi(20)
+  - moTa: VanBan
+  - tuKhoa: Chuoi(500)
+  - thongTinMoRongJson: VanBan
+  - trangThai: PhieuTrangThaiPhim
+  - ngayKhoiChieu: NgayGio
+  - ngayTao: NgayGio
+  - ngayCapNhat: NgayGio
+  + taoPhim(): LuanLy
+  + capNhatPhim(): LuanLy
+  + layDanhSachTheLoai(): DanhSach<TheLoai>
+}
+
+class TheLoai {
+  - maTheLoai: SoNguyen
+  - tenTheLoai: Chuoi(100)
+  + taoTheLoai(): LuanLy
+}
+
+class PhimTheLoai {
+  - maPhim: SoNguyen
+  - maTheLoai: SoNguyen
+}
+
+class PhongChieu {
+  - maPhong: SoNguyen
+  - tenPhong: Chuoi(100)
+  - soHangGhe: SoNguyen
+  - soCotGhe: SoNguyen
+  + taoPhong(): LuanLy
+  + sinhMaTranGhe(): DanhSach<Ghe>
+}
+
+class Ghe {
+  - maGhe: SoNguyen
+  - maPhong: SoNguyen
+  - hangGhe: Chuoi(5)
+  - soGhe: SoNguyen
+  - loaiGhe: PhieuLoaiGhe
+  + capNhatLoaiGhe(loai): LuanLy
+}
+
+class QuyTacGia {
+  - maQuyTac: SoNguyen
+  - tenQuyTac: Chuoi(120)
+  - loaiGhe: PhieuLoaiGhe
+  - loaiNgay: PhieuLoaiNgay
+  - gioBatDau: SoNguyen
+  - gioKetThuc: SoNguyen
+  - giaCoBan: SoThuc(10,2)
+  - phuPhi: SoThuc(10,2)
+  - trangThaiKichHoat: LuanLy
+  + tinhGiaVe(loaiGhe, thoiGianChieu): SoThuc(10,2)
+}
+
+class SuatChieu {
+  - maSuatChieu: SoNguyen
+  - maPhim: SoNguyen
+  - maPhong: SoNguyen
+  - thoiGianBatDau: NgayGio
+  - thoiGianKetThuc: NgayGio
+  - ngayTao: NgayGio
+  + tinhThoiGianKetThuc(thoiLuong): NgayGio
+  + kiemTraTrungLich(maPhong, batDau, ketThuc): LuanLy
+}
+
+class VeXemPhim {
+  - maVe: SoNguyen
+  - maNguoiDung: SoNguyen
+  - maSuatChieu: SoNguyen
+  - maGhe: SoNguyen
+  - trangThai: PhieuTrangThaiVe
+  - thoiGianHetHanGiuGhe: NgayGio
+  - soTien: SoThuc(10,2)
+  - maQR: Chuoi(255)
+  - thoiGianTao: NgayGio
+  - thoiGianHuy: NgayGio
+  + taoGiuGheTamThoi(5Phut): LuanLy
+  + xacNhanThanhToan(): LuanLy
+  + huyVeNguoiDung(): LuanLy
+  + checkInMaQR(maQR): LuanLy
+}
+
+class ThanhToan {
+  - maThanhToan: SoNguyen
+  - maVe: SoNguyen
+  - nhaCungCap: Chuoi(100)
+  - maGiaoDichNhaCungCap: Chuoi(150)
+  - trangThai: PhieuTrangThaiThanhToan
+  - soTien: SoThuc(10,2)
+  - thoiGianThanhToan: NgayGio
+  - thoiGianTao: NgayGio
+  + taoYeuCauThanhToan(): Chuoi(255)
+  + xuLyWebhookS2S(maGiaoDich): LuanLy
+  + hoanTien(): LuanLy
+}
+
+class NoiDungAI {
+  - maNoiDungAI: SoNguyen
+  - maPhim: SoNguyen
+  - loaiNoiDung: PhieuLoaiNoiDungAI
+  - vanBanNguon: VanBan
+  - vanBanSinhRa: VanBan
+  - trangThai: PhieuTrangThaiAI
+  - thoiGianSinh: NgayGio
+  - nguoiKiemDuyet: SoNguyen
+  - thoiGianKiemDuyet: NgayGio
+  + pheDuyet(): LuanLy
+  + chinhSua(noiDungMoi): LuanLy
+  + tuChoi(): LuanLy
+}
+
+class TongHopDoanhThu {
+  - maTongHop: SoNguyen
+  - loaiChuKy: PhieuChuKy
+  - ngayBatDau: NgayGio
+  - ngayKetThuc: NgayGio
+  - maPhim: SoNguyen
+  - maSuatChieu: SoNguyen
+  - soVeDaBan: SoNguyen
+  - tyLeLapDay: SoThuc(5,2)
+  - tongDoanhThu: SoThuc(12,2)
+  - maTomTatAI: SoNguyen
+  - nguoiKiemDuyet: SoNguyen
+  + tinhToanSoLieuDoanhThu(): TongHopDoanhThu
+}
+
+' --- MỐI QUAN HỆ GIỮA CÁC LỚP (RELATIONSHIPS) ---
+
+' Tích hợp Dịch vụ AI
+DichVuTroLyAI ..> Phim : sinh mo ta >
+DichVuTroLyAI ..> NoiDungAI : tao noi dung >
+DichVuTroLyAI ..> TongHopDoanhThu : phan tich >
+
+' Quan hệ Phim & Thể loại
+Phim "1" -- "0..*" PhimTheLoai
+TheLoai "1" -- "0..*" PhimTheLoai
+
+' Quan hệ Phòng & Ghế
+PhongChieu "1" -- "1..*" Ghe : chua >
+PhongChieu "1" -- "0..*" SuatChieu : to chuc >
+
+' Quan hệ Phim & Suất chiếu
+Phim "1" -- "0..*" SuatChieu : co >
+
+' Quan hệ Đặt vé & Người dùng
+NguoiDung "1" -- "0..*" VeXemPhim : dat >
+SuatChieu "1" -- "0..*" VeXemPhim : thuoc >
+Ghe "1" -- "0..*" VeXemPhim : gan cho >
+
+' Quan hệ Thanh toán
+VeXemPhim "1" -- "0..*" ThanhToan : co >
+
+' Quan hệ Kiểm duyệt AI
+NguoiDung "1" -- "0..*" NoiDungAI : kiem duyet >
+Phim "1" -- "0..*" NoiDungAI : lien quan >
+
+' Quan hệ Báo cáo Doanh thu & AI
+Phim "0..1" -- "0..*" TongHopDoanhThu
+SuatChieu "0..1" -- "0..*" TongHopDoanhThu
+NoiDungAI "0..1" -- "0..*" TongHopDoanhThu : nhan xet boi >
+NguoiDung "0..1" -- "0..*" TongHopDoanhThu : phe duyet >
+
+' Phụ thuộc tính giá
+QuyTacGia ..> VeXemPhim : ap dung gia >
+
+@enduml

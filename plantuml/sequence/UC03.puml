@@ -1,0 +1,19 @@
+﻿@startuml
+title UC03 - Thiết lập suất chiếu [FR-03]
+actor "Admin" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Chọn phim, phòng, ngày/giờ
+UI -> App: Yêu cầu UC03
+App -> App: Kiểm tra Không trùng phòng/giờ; chừa 10–15 phút
+alt Đủ điều kiện
+  App -> App: Lưu suất; khóa bán sau 15 phút từ lúc bắt đầu
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Từ chối lịch sai/chồng lấn
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

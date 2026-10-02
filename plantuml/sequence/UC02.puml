@@ -1,0 +1,19 @@
+﻿@startuml
+title UC02 - Quản lý phòng chiếu và ghế [FR-02]
+actor "Admin" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Khai báo phòng, hàng/cột và loại ghế
+UI -> App: Yêu cầu UC02
+App -> App: Kiểm tra Vị trí không trùng, không xung đột suất/vé
+alt Đủ điều kiện
+  App -> App: Lưu và hiển thị sơ đồ phòng/ghế
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Từ chối vị trí/loại ghế sai hoặc thay đổi gây xung đột
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

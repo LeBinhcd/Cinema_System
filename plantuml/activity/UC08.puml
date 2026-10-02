@@ -1,0 +1,19 @@
+﻿@startuml
+title UC08 - Hoạt động thanh toán online [FR-08]
+start
+:Khách xác nhận giá và thanh toán cho ghế HELD;
+:Tạo giao dịch PENDING với mã duy nhất;
+:Cổng thanh toán trả kết quả;
+if (SUCCESS đã xác thực và ghế hợp lệ?) then (Có)
+  :Chuyển SOLD và phát hành đúng một QR;
+  :Lưu biên nhận; trả vé cho khách;
+else (Không)
+  if (FAILED/CANCELLED?) then (Có)
+    :Không có vé; trả ghế AVAILABLE;
+  else (Chưa rõ)
+    :RECONCILIATION_REQUIRED;
+    :Cấp mã và hướng dẫn đối soát;
+  endif
+endif
+stop
+@enduml

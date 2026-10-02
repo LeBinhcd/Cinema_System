@@ -1,0 +1,14 @@
+﻿@startuml
+title UC12 - Hoạt động: Kiểm duyệt nội dung AI [FR-12]
+start
+:Admin - Mở bản nháp mô tả phim/báo cáo;
+:Kiểm tra Đúng quyền; đối chiếu nguồn nghiệp vụ;
+if (Đủ điều kiện?) then (Có)
+  :Admin sửa/duyệt APPROVED; chỉ nội dung đã duyệt được dùng;
+  :Thông báo thành công;
+else (Không)
+  :REJECTED/PENDING không công bố;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

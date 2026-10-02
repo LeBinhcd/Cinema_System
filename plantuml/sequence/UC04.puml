@@ -1,0 +1,19 @@
+﻿@startuml
+title UC04 - Định giá và tổng tiền [FR-04]
+actor "Admin / Khách hàng" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Admin cấu hình giá; khách chọn phim/suất/ghế
+UI -> App: Yêu cầu UC04
+App -> App: Kiểm tra Giá hợp lệ và khách có quyền xem
+alt Đủ điều kiện
+  App -> App: Hiển thị giá vé, phụ thu, thuế/phí nếu có và tổng tiền
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Từ chối giá âm/thiếu giá; tính lại nếu thay đổi
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

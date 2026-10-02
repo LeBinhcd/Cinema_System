@@ -1,0 +1,14 @@
+﻿@startuml
+title UC03 - Hoạt động: Thiết lập suất chiếu [FR-03]
+start
+:Admin - Chọn phim, phòng, ngày/giờ;
+:Kiểm tra Không trùng phòng/giờ; chừa 10–15 phút;
+if (Đủ điều kiện?) then (Có)
+  :Lưu suất; khóa bán sau 15 phút từ lúc bắt đầu;
+  :Thông báo thành công;
+else (Không)
+  :Từ chối lịch sai/chồng lấn;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

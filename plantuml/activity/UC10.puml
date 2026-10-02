@@ -1,0 +1,14 @@
+﻿@startuml
+title UC10 - Hoạt động: Tra cứu vé và suất [FR-10]
+start
+:Khách hàng / Nhân viên - Xác thực, tra vé/QR hoặc lọc phim/suất;
+:Kiểm tra Chủ vé hoặc Nhân viên có quyền;
+if (Đủ điều kiện?) then (Có)
+  :Trả đúng vé, lịch sử, phim và suất;
+  :Thông báo thành công;
+else (Không)
+  :Từ chối ngoài quyền; không lộ dữ liệu;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

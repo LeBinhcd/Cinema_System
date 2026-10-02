@@ -1,0 +1,19 @@
+﻿@startuml
+title UC05 - Xem lịch và sơ đồ ghế [FR-05]
+actor "Khách hàng / Nhân viên" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Lọc phim/suất và xem ghế
+UI -> App: Yêu cầu UC05
+App -> App: Kiểm tra Suất tồn tại, đúng quyền
+alt Đủ điều kiện
+  App -> App: Hiển thị AVAILABLE, HELD, SOLD
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Không cho chọn ghế vừa HELD/SOLD
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

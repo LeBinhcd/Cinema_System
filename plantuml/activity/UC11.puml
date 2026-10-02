@@ -1,0 +1,14 @@
+﻿@startuml
+title UC11 - Hoạt động: Báo cáo và AI tóm tắt [FR-11]
+start
+:Admin - Chọn phạm vi và yêu cầu tóm tắt;
+:Kiểm tra Đúng quyền, bộ lọc hợp lệ;
+if (Đủ điều kiện?) then (Có)
+  :Hiển thị số vé/lấp đầy/doanh thu; AI soạn 3–4 câu chờ UC12;
+  :Thông báo thành công;
+else (Không)
+  :Không bịa số liệu hoặc công bố nháp;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

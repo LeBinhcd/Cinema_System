@@ -1,0 +1,14 @@
+﻿@startuml
+title UC13 - Hoạt động: Đăng nhập và phân quyền [FR-13]
+start
+:Khách hàng / Nhân viên / Admin - Nhập thông tin đăng nhập;
+:Kiểm tra Xác thực hợp lệ, đúng vai trò;
+if (Đủ điều kiện?) then (Có)
+  :Tạo phiên và hiển thị chức năng đúng quyền;
+  :Thông báo thành công;
+else (Không)
+  :Sai/bị khóa/vượt quyền từ chối; hết phiên yêu cầu đăng nhập lại;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

@@ -1,0 +1,47 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "Khách hàng" as Customer
+actor "Phân hệ AI\n(hỗ trợ)" as AI <<System>>
+actor "Cổng thanh toán\n(bên ngoài)" as Gateway <<External>>
+
+rectangle "Phân hệ Khách hàng" {
+  usecase "UC04\nĐịnh giá và hiển thị tổng tiền\n[FR-04]" as UC04
+  usecase "UC05\nXem lịch và sơ đồ ghế\n[FR-05]" as UC05
+  usecase "UC06\nChọn ghế, giữ chỗ và gợi ý phim\n[FR-06]" as UC06
+  usecase "UC07\nHủy vé đã thanh toán\n[FR-07]" as UC07
+  usecase "UC08\nThanh toán online và phát hành vé QR\n[FR-08]" as UC08
+  usecase "UC10\nTra cứu vé và lịch chiếu\n[FR-10]" as UC10
+  usecase "UC13\nĐăng nhập và phân quyền\n[FR-13]" as UC13
+}
+
+Customer -- UC04
+Customer -- UC05
+Customer -- UC06
+Customer -- UC07
+Customer -- UC08
+Customer -- UC10
+Customer -- UC13
+
+AI -- UC06 : gợi ý phim
+Gateway -- UC08 : kết quả xác thực
+
+' --- QUAN HỆ INCLUDE ---
+UC06 ..> UC05 : <<include>>
+UC08 ..> UC04 : <<include>>
+UC07 ..> UC13 : <<include>>
+UC08 ..> UC13 : <<include>>
+UC10 ..> UC13 : <<include>>
+
+' --- QUAN HỆ EXTEND ---
+UC07 ..> UC10 : <<extend>>\n(tùy chọn hủy khi đang xem chi tiết vé)
+
+note bottom of UC06
+  HELD tối đa 5 phút, chưa phải vé; AI gợi ý 2-3 phim [FR-06]
+end note
+note bottom of UC08
+  Chỉ SUCCESS đã xác thực mới bán ghế, phát hành QR [FR-08]
+end note
+@enduml

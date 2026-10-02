@@ -1,0 +1,19 @@
+﻿@startuml
+title UC12 - Kiểm duyệt nội dung AI [FR-12]
+actor "Admin" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Mở bản nháp mô tả phim/báo cáo
+UI -> App: Yêu cầu UC12
+App -> App: Kiểm tra Đúng quyền; đối chiếu nguồn nghiệp vụ
+alt Đủ điều kiện
+  App -> App: Admin sửa/duyệt APPROVED; chỉ nội dung đã duyệt được dùng
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: REJECTED/PENDING không công bố
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

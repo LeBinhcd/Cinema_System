@@ -1,0 +1,19 @@
+﻿@startuml
+title UC07 - Hủy vé [FR-07]
+actor "Khách hàng / Nhân viên hỗ trợ" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Xác thực và yêu cầu hủy vé
+UI -> App: Yêu cầu UC07
+App -> App: Kiểm tra Còn ít nhất 60 phút; vé chưa check-in
+alt Đủ điều kiện
+  App -> App: Hủy vé, giải phóng ghế; xử lý tiền theo chính sách
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Từ chối vé không hợp lệ/đã dùng/quá hạn
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

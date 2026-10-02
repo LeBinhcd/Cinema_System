@@ -1,0 +1,14 @@
+﻿@startuml
+title UC04 - Hoạt động: Định giá và tổng tiền [FR-04]
+start
+:Admin / Khách hàng - Admin cấu hình giá; khách chọn phim/suất/ghế;
+:Kiểm tra Giá hợp lệ và khách có quyền xem;
+if (Đủ điều kiện?) then (Có)
+  :Hiển thị giá vé, phụ thu, thuế/phí nếu có và tổng tiền;
+  :Thông báo thành công;
+else (Không)
+  :Từ chối giá âm/thiếu giá; tính lại nếu thay đổi;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

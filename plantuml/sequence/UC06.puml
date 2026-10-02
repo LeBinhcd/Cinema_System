@@ -1,0 +1,19 @@
+﻿@startuml
+title UC06 - Giữ ghế và gợi ý phim [FR-06]
+actor "Khách hàng" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Chọn ghế và yêu cầu gợi ý
+UI -> App: Yêu cầu UC06
+App -> App: Kiểm tra Ghế AVAILABLE và khách đủ quyền
+alt Đủ điều kiện
+  App -> App: HELD tối đa 5 phút; AI gợi ý 2–3 phim từ suất còn ghế
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Từ chối ghế bận/hết hạn; trả AVAILABLE; không phát hành vé
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

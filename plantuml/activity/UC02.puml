@@ -1,0 +1,14 @@
+﻿@startuml
+title UC02 - Hoạt động: Quản lý phòng chiếu và ghế [FR-02]
+start
+:Admin - Khai báo phòng, hàng/cột và loại ghế;
+:Kiểm tra Vị trí không trùng, không xung đột suất/vé;
+if (Đủ điều kiện?) then (Có)
+  :Lưu và hiển thị sơ đồ phòng/ghế;
+  :Thông báo thành công;
+else (Không)
+  :Từ chối vị trí/loại ghế sai hoặc thay đổi gây xung đột;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

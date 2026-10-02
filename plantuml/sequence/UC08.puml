@@ -1,0 +1,32 @@
+﻿@startuml
+title UC08 - Thanh toán online và phát hành QR [FR-08]
+' Sources: docs/requirements.md, docs/user-stories.md, docs/acceptance-criteria.md, docs/traceability-matrix.md, docs/scope-review.md
+' Traceability: UC08 / FR-08 / US-FR08 / AC-08; NFR-02, NFR-03, NFR-05
+actor "Khách hàng" as Customer
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+participant "Cổng thanh toán" as Gateway
+Customer -> UI: Xác nhận giá và thanh toán ghế HELD trong tối đa 5 phút
+UI -> App: Yêu cầu thanh toán online
+App -> App: Tạo giao dịch PENDING với mã duy nhất
+App -> Gateway: Gửi yêu cầu thanh toán
+Gateway --> App: Trả kết quả giao dịch
+alt SUCCESS đã xác thực và ghế HELD còn hiệu lực
+  App -> App: Chuyển SUCCESS; HELD -> SOLD
+  App -> App: Phát hành đúng một QR và lưu biên nhận
+  App --> UI: Trả QR và biên nhận
+else FAILED, CANCELLED hoặc ghế hết hạn
+  App -> App: Ghi trạng thái; trả HELD -> AVAILABLE
+  App --> UI: Không phát hành vé; thông báo thất bại
+else Bị trừ tiền nhưng chưa có vé hoặc kết quả chưa rõ
+  App -> App: Ghi RECONCILIATION_REQUIRED
+  App --> UI: Mã giao dịch và hướng dẫn đối soát
+end
+alt Nhận lại SUCCESS cùng mã giao dịch
+  App -> App: Trả QR đã có; không phát hành vé thứ hai hoặc bán trùng ghế
+end
+note over App
+  Chưa xác nhận: nhà cung cấp thanh toán, đầu mối/thời hạn đối soát và xử lý kết quả đến trễ.
+  Nhân viên không tự xác nhận giao dịch; thanh toán tại quầy/in vé giấy ngoài baseline.
+end note
+@enduml

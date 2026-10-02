@@ -1,0 +1,19 @@
+﻿@startuml
+title UC13 - Đăng nhập và phân quyền [FR-13]
+actor "Khách hàng / Nhân viên / Admin" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Nhập thông tin đăng nhập
+UI -> App: Yêu cầu UC13
+App -> App: Kiểm tra Xác thực hợp lệ, đúng vai trò
+alt Đủ điều kiện
+  App -> App: Tạo phiên và hiển thị chức năng đúng quyền
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Sai/bị khóa/vượt quyền từ chối; hết phiên yêu cầu đăng nhập lại
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

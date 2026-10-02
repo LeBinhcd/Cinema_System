@@ -1,0 +1,19 @@
+﻿@startuml
+title UC10 - Tra cứu vé và suất [FR-10]
+actor "Khách hàng / Nhân viên" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Xác thực, tra vé/QR hoặc lọc phim/suất
+UI -> App: Yêu cầu UC10
+App -> App: Kiểm tra Chủ vé hoặc Nhân viên có quyền
+alt Đủ điều kiện
+  App -> App: Trả đúng vé, lịch sử, phim và suất
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Từ chối ngoài quyền; không lộ dữ liệu
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

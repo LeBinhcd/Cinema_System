@@ -1,0 +1,194 @@
+@startuml
+' --- CẤU HÌNH GIAO DIỆN & MÀU SẮC (THEME) ---
+skinparam shadowing false
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "Segoe UI", Arial, sans-serif
+
+' Màu sắc cho thẻ Thực thể (Entity / Class)
+skinparam class {
+    BackgroundColor #FFFFFF
+    HeaderBackgroundColor #ECECEC
+    BorderColor #666666
+    FontColor #000000
+    FontSize 13
+    AttributeFontColor #222222
+    AttributeFontSize 12
+}
+
+' Màu đường nối quan hệ
+skinparam arrow {
+    Color #555555
+}
+
+' --- CÁC THỰC THỂ (ENTITIES) ---
+
+class "NguoiDung" as NguoiDung << (E, #4CAF50) >> {
+  - maNguoiDung : bigint «PK»
+  --
+  hoTen : varchar(150)
+  soDienThoai : varchar(20) «UQ»
+  matKhau : varchar(255)
+  vaiTro : enum
+  ngayTao : timestamp
+  ngayCapNhat : timestamp
+}
+
+class "Phim" as Phim << (E, #4CAF50) >> {
+  - maPhim : bigint «PK»
+  --
+  tenPhim : varchar(255)
+  thoiLuong : smallint
+  doTuoi : varchar(20)
+  moTa : varchar(500)
+  tuKhoa : varchar(500)
+  thongTinMoRong : json
+  trangThai : enum
+  ngayKhoiChieu : date
+  ngayTao : timestamp
+  ngayCapNhat : timestamp
+}
+
+class "TheLoai" as TheLoai << (E, #4CAF50) >> {
+  - maTheLoai : bigint «PK»
+  --
+  tenTheLoai : varchar(100) «UQ»
+}
+
+class "PhimTheLoai" as PhimTheLoai << (E, #4CAF50) >> {
+  - maPhim : bigint «PK» «FK»
+  - maTheLoai : bigint «PK» «FK»
+}
+
+class "PhongChieu" as PhongChieu << (E, #4CAF50) >> {
+  - maPhong : bigint «PK»
+  --
+  tenPhong : varchar(100) «UQ»
+  soHangGhe : smallint
+  soCotGhe : smallint
+}
+
+class "Ghe" as Ghe << (E, #4CAF50) >> {
+  - maGhe : bigint «PK»
+  --
+  maPhong : bigint «FK»
+  hangGhe : varchar(5)
+  soGhe : smallint
+  loaiGhe : enum
+}
+
+class "QuyTacGia" as QuyTacGia << (E, #4CAF50) >> {
+  - maQuyTac : bigint «PK»
+  --
+  tenQuyTac : varchar(120)
+  loaiGhe : enum
+  loaiNgay : enum
+  gioBatDau : tinyint
+  gioKetThuc : tinyint
+  giaCoBan : decimal(10,2)
+  phuPhi : decimal(10,2)
+  trangThaiKichHoat : boolean
+}
+
+class "SuatChieu" as SuatChieu << (E, #4CAF50) >> {
+  - maSuatChieu : bigint «PK»
+  --
+  maPhim : bigint «FK»
+  maPhong : bigint «FK»
+  thoiGianBatDau : datetime
+  thoiGianKetThuc : datetime
+  ngayTao : timestamp
+}
+
+class "VeXemPhim" as VeXemPhim << (E, #4CAF50) >> {
+  - maVe : bigint «PK»
+  --
+  maNguoiDung : bigint «FK»
+  maSuatChieu : bigint «FK»
+  maGhe : bigint «FK»
+  trangThai : enum
+  thoiGianHetHanGiuGhe : datetime
+  soTien : decimal(10,2)
+  maQR : varchar(255) «UQ»
+  thoiGianTao : timestamp
+  thoiGianHuy : datetime
+}
+
+class "ThanhToan" as ThanhToan << (E, #4CAF50) >> {
+  - maThanhToan : bigint «PK»
+  --
+  maVe : bigint «FK»
+  nhaCungCap : varchar(100)
+  maGiaoDichNhaCungCap : varchar(150) «UQ»
+  trangThai : enum
+  soTien : decimal(10,2)
+  thoiGianThanhToan : datetime
+  thoiGianTao : timestamp
+}
+
+class "NoiDungAI" as NoiDungAI << (E, #4CAF50) >> {
+  - maNoiDungAI : bigint «PK»
+  --
+  maPhim : bigint «FK»
+  loaiNoiDung : enum
+  vanBanNguon : text
+  vanBanSinhRa : text
+  trangThai : enum
+  thoiGianSinh : timestamp
+  nguoiKiemDuyet : bigint «FK»
+  thoiGianKiemDuyet : datetime
+}
+
+class "TongHopDoanhThu" as TongHopDoanhThu << (E, #4CAF50) >> {
+  - maTongHop : bigint «PK»
+  --
+  loaiChuKy : enum
+  ngayBatDau : date
+  ngayKetThuc : date
+  maPhim : bigint «FK»
+  maSuatChieu : bigint «FK»
+  soVeDaBan : int
+  tyLeLapDay : decimal(5,2)
+  tongDoanhThu : decimal(12,2)
+  maTomTatAI : bigint «FK»
+  nguoiKiemDuyet : bigint «FK»
+}
+
+' --- QUAN HỆ KHÓA NGOẠI (HARD FOREIGN KEYS) ---
+
+' Phim & Thể loại (N:N)
+Phim ||--|{ PhimTheLoai
+TheLoai ||--|{ PhimTheLoai
+
+' Sơ đồ Phòng & Ghế
+PhongChieu ||--|{ Ghe
+
+' Xếp Lịch chiếu
+Phim ||--o{ SuatChieu
+PhongChieu ||--o{ SuatChieu
+
+' Đặt vé
+NguoiDung ||--o{ VeXemPhim
+SuatChieu ||--|{ VeXemPhim
+Ghe ||--|{ VeXemPhim
+
+' Thanh toán Giao dịch
+VeXemPhim ||--o{ ThanhToan
+
+' Quản lý Nội dung AI
+Phim ||--o{ NoiDungAI
+NguoiDung ||--o{ NoiDungAI
+
+' Thống kê Báo cáo Doanh thu
+Phim ||--o{ TongHopDoanhThu
+SuatChieu ||--o{ TongHopDoanhThu
+NoiDungAI ||--o{ TongHopDoanhThu
+NguoiDung ||--o{ TongHopDoanhThu
+
+' --- LIÊN KẾT TRA CỨU NGHIỆP VỤ ĐỘNG (LOGICAL DEPENDENCIES) ---
+QuyTacGia ..|{ Ghe : "Khớp loaiGhe"
+SuatChieu ..> QuyTacGia : "Cung cấp loaiNgay & khungGio"
+QuyTacGia ..> VeXemPhim : "Tính giaVe snapshot"
+
+@enduml

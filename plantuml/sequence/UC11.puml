@@ -1,0 +1,19 @@
+﻿@startuml
+title UC11 - Báo cáo và AI tóm tắt [FR-11]
+actor "Admin" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Chọn phạm vi và yêu cầu tóm tắt
+UI -> App: Yêu cầu UC11
+App -> App: Kiểm tra Đúng quyền, bộ lọc hợp lệ
+alt Đủ điều kiện
+  App -> App: Hiển thị số vé/lấp đầy/doanh thu; AI soạn 3–4 câu chờ UC12
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Không bịa số liệu hoặc công bố nháp
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

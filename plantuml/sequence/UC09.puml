@@ -1,0 +1,19 @@
+﻿@startuml
+title UC09 - Quét QR soát vé [FR-09]
+actor "Nhân viên" as User
+participant "Giao diện" as UI
+participant "Hệ thống" as App
+User -> UI: Quét QR hoặc tra cứu có xác thực
+UI -> App: Yêu cầu UC09
+App -> App: Kiểm tra Vé đã thanh toán, đúng suất/phòng/ghế, chưa hủy/chưa dùng
+alt Đủ điều kiện
+  App -> App: Ghi check-in một lần; cho vào
+  App --> UI: Trả kết quả thành công
+else Ngoại lệ hoặc không đủ điều kiện
+  App -> App: Từ chối QR lỗi/HELD/hủy/đã dùng/sai thông tin
+  App --> UI: Thông báo lỗi và trạng thái
+end
+note over App
+  Baseline không tự chốt chính sách chưa xác nhận.
+end note
+@enduml

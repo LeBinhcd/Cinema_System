@@ -1,0 +1,14 @@
+﻿@startuml
+title UC01 - Hoạt động: Quản lý phim và mô tả AI [FR-01]
+start
+:Admin - Nhập/sửa phim và yêu cầu mô tả;
+:Kiểm tra Admin có quyền; phim hợp lệ;
+if (Đủ điều kiện?) then (Có)
+  :Lưu phim; AI tạo bản nháp dưới 150 từ chờ UC12;
+  :Thông báo thành công;
+else (Không)
+  :Từ chối dữ liệu sai/thiếu quyền; không công bố bản nháp;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml

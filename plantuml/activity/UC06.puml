@@ -1,0 +1,14 @@
+﻿@startuml
+title UC06 - Hoạt động: Giữ ghế và gợi ý phim [FR-06]
+start
+:Khách hàng - Chọn ghế và yêu cầu gợi ý;
+:Kiểm tra Ghế AVAILABLE và khách đủ quyền;
+if (Đủ điều kiện?) then (Có)
+  :HELD tối đa 5 phút; AI gợi ý 2–3 phim từ suất còn ghế;
+  :Thông báo thành công;
+else (Không)
+  :Từ chối ghế bận/hết hạn; trả AVAILABLE; không phát hành vé;
+  :Thông báo lỗi/hướng xử lý;
+endif
+stop
+@enduml
