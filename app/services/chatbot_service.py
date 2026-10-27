@@ -66,3 +66,4 @@ def process_chat(user_question: str) -> dict:
         answer = _movie_list_answer(rows)
     elif not _grounded(answer, rows):
         answer = _fallback(rows)
+    return {"answer": answer, "cards": [_card_from_screening(row) for row in rows]}
