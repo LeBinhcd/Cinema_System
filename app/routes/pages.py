@@ -138,36 +138,32 @@ def movie(movie_id):
         abort(404)
     if spa_index():
         return spa_index()
-    return render_template("movie.html", movie=movie_data, screenings=[s for s in CatalogService.screenings()
-                           if s["movie_id"] == movie_id and s["sales_open"]])
+    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
 
 
 @pages_bp.get("/booking/<int:screening_id>")
 def booking(screening_id):
     if spa_index():
         return spa_index()
-    screening = SeatMapService.get_for_screening(screening_id)
-    if screening is None:
-        abort(404)
-    return render_template("booking.html", screening=screening, prices=BASE_PRICES)
+    if spa_index():
+        return spa_index()
+    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
 
 
 @pages_bp.get("/login")
 def login():
     frontend_index = Path(current_app.root_path) / 'frontend' / 'dist' / 'index.html'
-    if frontend_index.exists():
-        return send_from_directory(frontend_index.parent, 'index.html')
-    return render_template("login.html", show_demo_accounts=current_app.config["APP_ENV"].lower() in ("development", "demo", "testing"))
+    if spa_index():
+        return spa_index()
+    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
 
 
 @pages_bp.get("/admin")
 @admin_required
 def dashboard():
-    frontend_index = Path(current_app.root_path) / 'frontend' / 'dist' / 'index.html'
-    if frontend_index.exists():
-        return send_from_directory(frontend_index.parent, 'index.html')
-    return render_template("admin.html", movies=CatalogService.movies(),
-                           screenings=CatalogService.screenings(), drafts=CatalogService.drafts(), rooms=AdminService.rooms())
+    if spa_index():
+        return spa_index()
+    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
 
 
 def admin_csrf():
@@ -339,11 +335,9 @@ def admin_dashboard_api():
 @pages_bp.get("/staff")
 @staff_required
 def staff():
-    frontend_index = Path(current_app.root_path) / 'frontend' / 'dist' / 'index.html'
-    if frontend_index.exists():
-        return send_from_directory(frontend_index.parent, 'index.html')
-    query = request.args.get("q", "").strip()
-    return render_template("staff.html", query=query, tickets=StaffService.lookup(query), screenings=StaffService.screenings_today(), prices=BASE_PRICES)
+    if spa_index():
+        return spa_index()
+    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
 
 
 def staff_csrf():
@@ -423,10 +417,9 @@ def checkout(hold_id):
         return redirect(url_for("pages.login"))
     if spa_index():
         return spa_index()
-    order = PaymentService.checkout(hold_id, session["user_id"])
-    if order is None:
-        abort(404, description="Giữ ghế không tồn tại hoặc đã hết hạn.")
-    return render_template("checkout.html", order=order)
+    if spa_index():
+        return spa_index()
+    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
 
 
 @pages_bp.get("/ticket/<booking_code>")
@@ -436,10 +429,9 @@ def ticket(booking_code):
         return redirect(url_for("pages.login"))
     if spa_index():
         return spa_index()
-    ticket_data = TicketService.get(booking_code, session["user_id"])
-    if ticket_data is None:
-        abort(404)
-    return render_template("ticket.html", ticket=ticket_data)
+    if spa_index():
+        return spa_index()
+    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
 
 
 @pages_bp.get('/my-tickets')
@@ -449,9 +441,9 @@ def my_tickets():
         return spa_index()
     if not session.get('user_id'):
         return redirect(url_for('pages.login'))
-    if session.get('role') != 'CUSTOMER':
-        abort(403)
-    return render_template('my_tickets.html', tickets=TicketService.history(session['user_id']))
+    if spa_index():
+        return spa_index()
+    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
 
 
 
