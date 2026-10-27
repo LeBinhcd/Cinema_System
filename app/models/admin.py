@@ -71,10 +71,22 @@ class AdminModel(PreviewModel):
     def movie_details(self, movie_id):
         return self.connection.execute('SELECT * FROM movies WHERE id=?', (movie_id,)).fetchone()
 
+    def update_movie(self, movie_id, data):
+        updated = self.connection.execute("""UPDATE movies SET title=?, duration_minutes=?, release_date=?, synopsis=?, metadata_json=?, status=?, age_rating=?, keywords=? WHERE id=?""", (data['title'], data['duration'], data['release_date'], data['synopsis'], data['metadata_json'], data['status'], data['age_rating'], data['keywords'], movie_id)).rowcount
+        if not updated:
+            return False
+        self.connection.execute('DELETE FROM movie_genres WHERE movie_id=?', (movie_id,))
+        self.connection.execute('INSERT OR IGNORE INTO genres(name) VALUES(?)', (data['genre'],))
+        genre = self.connection.execute('SELECT id FROM genres WHERE name=?', (data['genre'],)).fetchone()
+        self.connection.execute('INSERT INTO movie_genres(movie_id,genre_id) VALUES(?,?)', (movie_id, genre['id']))
+        return True
+
     def set_movie_status(self, movie_id, status):
         self.connection.execute('UPDATE movies SET status=? WHERE id=?', (status, movie_id))
 
     def room(self, room_id):
+
+
         return self.connection.execute('SELECT * FROM screening_rooms WHERE id=?', (room_id,)).fetchone()
 
     def set_room_status(self, room_id, status):

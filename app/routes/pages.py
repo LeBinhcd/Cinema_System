@@ -219,13 +219,25 @@ def generate_movie_description():
         return jsonify(success=False, error='Không thể sinh mô tả lúc này. Vui lòng thử lại sau.'), 503
 
 
+@pages_bp.post('/admin/movies/<int:movie_id>/update')
+@admin_required
+def update_movie_react(movie_id):
+    token = session.get('csrf_token')
+    supplied = request.headers.get('X-CSRF-Token', '')
+    if not token or not compare_digest(supplied.encode(), token.encode()):
+        return jsonify(success=False, error='Mã xác nhận không hợp lệ; hãy tải lại trang.'), 403
+    data = request.get_json(silent=True) or {}
+    try:
+        AdminService.edit_movie(movie_id, data)
+        return jsonify(success=True, message='Đã cập nhật phim.')
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
 @pages_bp.post('/admin/movies/<int:movie_id>/toggle-status')
 @admin_required
 def toggle_movie(movie_id):
     return admin_action(lambda: AdminService.toggle_movie(movie_id), 'Đã đổi trạng thái phim.', 'movies')
 
-
-@pages_bp.post('/admin/screenings/add')
 @admin_required
 def add_screening():
     return admin_action(lambda: AdminService.add_screening(request.form), 'Đã thêm suất chiếu.', 'screenings')

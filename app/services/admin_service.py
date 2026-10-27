@@ -92,6 +92,16 @@ class AdminService:
             model.set_movie_status(movie_id, 'ENDED' if movie['status'] == 'SHOWING' else 'SHOWING')
 
     @staticmethod
+    def edit_movie(movie_id, data):
+        data = AdminService._movie_data(data)
+        if len(data['synopsis'].split()) > 150:
+            raise ValueError('Mô tả phải có tối đa 150 từ.')
+        with AdminModel.transaction() as model:
+            if not model.movie_details(movie_id):
+                raise ValueError('Phim không tồn tại.')
+            return model.update_movie(movie_id, data)
+
+    @staticmethod
     def rooms():
         return AdminModel.rooms()
 

@@ -36,19 +36,29 @@ env_path.write_text(
 )
 PY
 fi
+command -v npm >/dev/null 2>&1 || fail 'Chưa cài Node.js/npm. Cần Node.js 18+ để build frontend React.'
+if [[ ! -d "$PROJECT_DIR/node_modules" ]]; then
+  say 'Cài dependency frontend lần đầu...'; npm install --no-audit --no-fund
+fi
+say 'Build frontend React/Vite...'; npm run build
+[[ -f "$PROJECT_DIR/dist/index.html" ]] || fail 'Không tạo được dist/index.html; dừng để không chạy frontend cũ.'
+say 'Frontend React đã build xong.'
+
 say 'Nạp dữ liệu mẫu SQLite...'; "$PYTHON" "$PROJECT_DIR/seed.py"
 
-# Không khởi động thêm một Flask server nếu CineVista đã chạy.
-if curl --silent --fail --max-time 2 http://127.0.0.1:5000/health >/dev/null 2>&1; then
-  say 'CineVista đã chạy tại http://127.0.0.1:5000'
-  say "Log: $LOG_FILE"
-  if command -v xdg-open >/dev/null 2>&1; then xdg-open http://127.0.0.1:5000 >/dev/null 2>&1 || true; fi
-  if [[ -t 0 ]]; then tail -f "$LOG_FILE"; fi
-  exit 0
+say 'Nạp dữ liệu mẫu SQLite...'; "$PYTHON" "$PROJECT_DIR/seed.py"
+
+say 'Dừng phiên CineVista cũ để reset đăng nhập...'
+old_pids=$(pgrep -f "$PROJECT_DIR/.venv/bin/python $PROJECT_DIR/app.py" || true)
+if [[ -n "$old_pids" ]]; then
+  kill $old_pids 2>/dev/null || true
+  for _ in {1..20}; do
+    sleep 0.1
+    pgrep -f "$PROJECT_DIR/.venv/bin/python $PROJECT_DIR/app.py" >/dev/null 2>&1 || break
+  done
 fi
-if command -v ss >/dev/null 2>&1 && ss -ltn 'sport = :5000' | grep -q ':5000'; then
-  fail 'Cổng 5000 đang bị tiến trình khác chiếm. Hãy dừng tiến trình đó rồi chạy lại.'
-fi
+
 say 'Khởi động CineVista tại http://127.0.0.1:5000'; say 'Đóng cửa sổ này để dừng server.'
+
 exec "$PYTHON" "$PROJECT_DIR/app.py"
 
