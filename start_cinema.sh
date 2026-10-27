@@ -46,6 +46,15 @@ say 'Frontend React đã build xong.'
 
 say 'Nạp dữ liệu mẫu SQLite...'; "$PYTHON" "$PROJECT_DIR/seed.py"
 
+# Giữ tối đa 5 bản backup tự động gần nhất; không đụng các backup thủ công.
+mapfile -t STARTUP_BACKUPS < <(find "$PROJECT_DIR" -maxdepth 1 -type f -name 'cinema.db.backup-startup-*' -printf '%f\n' | sort -r)
+if (( ${#STARTUP_BACKUPS[@]} > 5 )); then
+  for backup in "${STARTUP_BACKUPS[@]:5}"; do
+    rm -f -- "$PROJECT_DIR/$backup"
+  done
+  say "Đã dọn backup startup cũ; giữ lại 5 bản gần nhất."
+fi
+
 say 'Dừng phiên CineVista cũ để reset đăng nhập...'
 old_pids=$(pgrep -f "$PROJECT_DIR/.venv/bin/python $PROJECT_DIR/app.py" || true)
 if [[ -n "$old_pids" ]]; then
