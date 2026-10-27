@@ -9,7 +9,7 @@ def _guard(role, view):
         if not session.get('user_id') or session.get('role') != role:
             if is_api:
                 return jsonify(error=f'Yêu cầu quyền {role}.'), 403
-            return redirect(url_for('pages.login'))
+            return redirect(url_for('frontend.login'))
         return view(*args, **kwargs)
     return wrapped
 

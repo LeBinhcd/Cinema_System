@@ -52,6 +52,7 @@ def create_app(config=None):
     from app.routes.chatbot import chatbot_bp
     from app.routes.seats import seats_bp
     from app.routes.pages import pages_bp
+    from app.routes.frontend import frontend_bp
     if app.config["DB_ENGINE"] == "mysql":
         app.register_blueprint(admin_bp)
     else:
@@ -63,6 +64,7 @@ def create_app(config=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(chatbot_bp)
     app.register_blueprint(seats_bp)
+    app.register_blueprint(frontend_bp)
     app.register_blueprint(pages_bp)
 
     @app.get("/health")

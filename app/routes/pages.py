@@ -26,13 +26,6 @@ from app.services.auth_service import AuthService
 pages_bp = Blueprint("pages", __name__)
 
 
-def spa_index():
-    frontend_index = Path(current_app.root_path) / 'frontend' / 'dist' / 'index.html'
-    if frontend_index.exists():
-        return send_from_directory(frontend_index.parent, 'index.html')
-    return None
-
-
 @pages_bp.get('/api/checkout/<int:hold_id>')
 @customer_required
 def checkout_api(hold_id):
@@ -65,19 +58,6 @@ def ticket_api(booking_code):
     if ticket_data is None:
         return jsonify({'error': 'Không tìm thấy vé.'}), 404
     return jsonify(ticket_data)
-
-
-
-@pages_bp.get("/")
-@pages_bp.get("/movies")
-def index():
-    frontend = spa_index()
-    if frontend is not None:
-        return frontend
-    abort(503, description="React frontend chưa được build. Hãy chạy npm run build.")
-
-
-
 
 
 
@@ -131,41 +111,6 @@ def frontend_assets(filename):
     return send_from_directory(assets_dir, filename)
 
 
-@pages_bp.get("/movie/<int:movie_id>")
-def movie(movie_id):
-    movie_data = next((m for m in CatalogService.movies() if m["id"] == movie_id), None)
-    if movie_data is None:
-        abort(404)
-    if spa_index():
-        return spa_index()
-    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
-
-
-@pages_bp.get("/booking/<int:screening_id>")
-def booking(screening_id):
-    if spa_index():
-        return spa_index()
-    if spa_index():
-        return spa_index()
-    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
-
-
-@pages_bp.get("/login")
-def login():
-    frontend_index = Path(current_app.root_path) / 'frontend' / 'dist' / 'index.html'
-    if spa_index():
-        return spa_index()
-    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
-
-
-@pages_bp.get("/admin")
-@admin_required
-def dashboard():
-    if spa_index():
-        return spa_index()
-    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
-
-
 def admin_csrf():
     token = session.get('csrf_token')
     if not token or not compare_digest(request.form.get('csrf_token', ''), token):
@@ -181,7 +126,7 @@ def admin_action(action, message, section):
         flash(str(exc), 'danger')
     except IntegrityError:
         flash('Dữ liệu bị trùng hoặc tham chiếu không hợp lệ; chưa lưu thay đổi.', 'danger')
-    return redirect(url_for('pages.dashboard', _anchor=section))
+    return redirect(url_for('frontend.dashboard', _anchor=section))
 
 
 @pages_bp.post('/admin/movies/add')
@@ -332,14 +277,6 @@ def create_staff_api():
 @admin_required
 def admin_dashboard_api():
     return jsonify({'movies': CatalogService.movies(), 'screenings': CatalogService.screenings(), 'rooms': AdminService.rooms(), 'drafts': CatalogService.drafts()})
-@pages_bp.get("/staff")
-@staff_required
-def staff():
-    if spa_index():
-        return spa_index()
-    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
-
-
 def staff_csrf():
     token = session.get('csrf_token')
     if not token or not compare_digest(request.headers.get('X-CSRF-Token', ''), token):
@@ -408,43 +345,6 @@ def hold_seat():
     seat_ids = data.get('seat_ids', [data.get('seat_id')])
     result, code = PreviewService.hold(session["user_id"], screening_id, seat_ids)
     return jsonify(result or {"error": "Suất chiếu không tồn tại."}), code
-
-
-@pages_bp.get("/checkout/<int:hold_id>")
-@customer_required
-def checkout(hold_id):
-    if not session.get("user_id"):
-        return redirect(url_for("pages.login"))
-    if spa_index():
-        return spa_index()
-    if spa_index():
-        return spa_index()
-    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
-
-
-@pages_bp.get("/ticket/<booking_code>")
-@customer_required
-def ticket(booking_code):
-    if not session.get("user_id"):
-        return redirect(url_for("pages.login"))
-    if spa_index():
-        return spa_index()
-    if spa_index():
-        return spa_index()
-    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
-
-
-@pages_bp.get('/my-tickets')
-@customer_required
-def my_tickets():
-    if session.get('user_id') and session.get('role') == 'CUSTOMER' and spa_index():
-        return spa_index()
-    if not session.get('user_id'):
-        return redirect(url_for('pages.login'))
-    if spa_index():
-        return spa_index()
-    abort(503, description="React frontend chưa được build. Hãy chạy npm run build trong app/frontend.")
-
 
 
 @pages_bp.post("/api/payment/process")
