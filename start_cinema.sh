@@ -37,14 +37,12 @@ env_path.write_text(
 PY
 fi
 command -v npm >/dev/null 2>&1 || fail 'Chưa cài Node.js/npm. Cần Node.js 18+ để build frontend React.'
-if [[ ! -d "$PROJECT_DIR/node_modules" ]]; then
-  say 'Cài dependency frontend lần đầu...'; npm install --no-audit --no-fund
+if [[ ! -d "$PROJECT_DIR/app/frontend/node_modules" ]]; then
+  say 'Cài dependency frontend lần đầu...'; (cd "$PROJECT_DIR/app/frontend" && npm install --no-audit --no-fund)
 fi
-say 'Build frontend React/Vite...'; npm run build
-[[ -f "$PROJECT_DIR/dist/index.html" ]] || fail 'Không tạo được dist/index.html; dừng để không chạy frontend cũ.'
+say 'Build frontend React/Vite...'; (cd "$PROJECT_DIR/app/frontend" && npm run build)
+[[ -f "$PROJECT_DIR/app/frontend/dist/index.html" ]] || fail 'Không tạo được dist/index.html; dừng để không chạy frontend cũ.'
 say 'Frontend React đã build xong.'
-
-say 'Nạp dữ liệu mẫu SQLite...'; "$PYTHON" "$PROJECT_DIR/seed.py"
 
 say 'Nạp dữ liệu mẫu SQLite...'; "$PYTHON" "$PROJECT_DIR/seed.py"
 

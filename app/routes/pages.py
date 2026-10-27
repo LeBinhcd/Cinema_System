@@ -27,7 +27,7 @@ pages_bp = Blueprint("pages", __name__)
 
 
 def spa_index():
-    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
+    frontend_index = Path(current_app.root_path) / 'frontend' / 'dist' / 'index.html'
     if frontend_index.exists():
         return send_from_directory(frontend_index.parent, 'index.html')
     return None
@@ -127,7 +127,7 @@ def catalog_api():
 
 @pages_bp.get('/assets/<path:filename>')
 def frontend_assets(filename):
-    assets_dir = Path(current_app.root_path).parent / 'dist' / 'assets'
+    assets_dir = Path(current_app.root_path) / 'frontend' / 'dist' / 'assets'
     return send_from_directory(assets_dir, filename)
 
 
@@ -154,7 +154,7 @@ def booking(screening_id):
 
 @pages_bp.get("/login")
 def login():
-    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
+    frontend_index = Path(current_app.root_path) / 'frontend' / 'dist' / 'index.html'
     if frontend_index.exists():
         return send_from_directory(frontend_index.parent, 'index.html')
     return render_template("login.html", show_demo_accounts=current_app.config["APP_ENV"].lower() in ("development", "demo", "testing"))
@@ -163,7 +163,7 @@ def login():
 @pages_bp.get("/admin")
 @admin_required
 def dashboard():
-    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
+    frontend_index = Path(current_app.root_path) / 'frontend' / 'dist' / 'index.html'
     if frontend_index.exists():
         return send_from_directory(frontend_index.parent, 'index.html')
     return render_template("admin.html", movies=CatalogService.movies(),
@@ -339,7 +339,7 @@ def admin_dashboard_api():
 @pages_bp.get("/staff")
 @staff_required
 def staff():
-    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
+    frontend_index = Path(current_app.root_path) / 'frontend' / 'dist' / 'index.html'
     if frontend_index.exists():
         return send_from_directory(frontend_index.parent, 'index.html')
     query = request.args.get("q", "").strip()

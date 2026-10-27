@@ -60,9 +60,11 @@ if errorlevel 1 (
   goto :end
 )
 
-if not exist "%PROJECT_DIR%node_modules" (
+if not exist "%PROJECT_DIR%app\frontend\node_modules" (
   call :log "Dang cai dependency frontend..."
+  pushd "%PROJECT_DIR%app\frontend"
   call npm install --no-audit --no-fund
+  popd
   if errorlevel 1 (
     call :fail "Cai dependency frontend that bai."
     goto :end
@@ -70,16 +72,18 @@ if not exist "%PROJECT_DIR%node_modules" (
 )
 
 call :log "Build frontend React/Vite..."
+pushd "%PROJECT_DIR%app\frontend"
 call npm run build
+popd
 if errorlevel 1 (
   call :fail "Build frontend that bai. Khong khoi dong fallback Jinja cu."
   goto :end
 )
-if not exist "%PROJECT_DIR%dist\index.html" (
+if not exist "%PROJECT_DIR%app\frontend\dist\index.html" (
   call :fail "Khong tim thay dist\index.html sau khi build frontend."
   goto :end
 )
-call :log "Frontend React da build tai %PROJECT_DIR%dist"
+call :log "Frontend React da build tai %PROJECT_DIR%app\frontend\dist"
 
 call :log "Nap du lieu mau SQLite..."
 "%PYTHON%" "%PROJECT_DIR%seed.py"
