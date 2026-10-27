@@ -71,11 +71,10 @@ def ticket_api(booking_code):
 @pages_bp.get("/")
 @pages_bp.get("/movies")
 def index():
-    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
-    if frontend_index.exists():
-        return send_from_directory(frontend_index.parent, 'index.html')
-    return render_template("index.html", movies=[m for m in CatalogService.movies() if m["status"] == "SHOWING"],
-                           screenings=[s for s in CatalogService.screenings() if s["sales_open"]])
+    frontend = spa_index()
+    if frontend is not None:
+        return frontend
+    abort(503, description="React frontend chưa được build. Hãy chạy npm run build.")
 
 
 

@@ -46,13 +46,40 @@ if not exist "%PROJECT_DIR%.env" (
 
 "%PYTHON%" -c "import flask, dotenv" >nul 2>&1
 if errorlevel 1 (
-  call :log "Dang cai dependency tu requirements.txt..."
+  call :log "Dang cai dependency Python tu requirements.txt..."
   "%PIP%" install -r "%PROJECT_DIR%requirements.txt"
   if errorlevel 1 (
-    call :fail "Cai dependency that bai."
+    call :fail "Cai dependency Python that bai."
     goto :end
   )
 )
+
+where npm >nul 2>&1
+if errorlevel 1 (
+  call :fail "Khong tim thay npm/Node.js. Cai Node.js 18+ de build frontend React."
+  goto :end
+)
+
+if not exist "%PROJECT_DIR%node_modules" (
+  call :log "Dang cai dependency frontend..."
+  call npm install --no-audit --no-fund
+  if errorlevel 1 (
+    call :fail "Cai dependency frontend that bai."
+    goto :end
+  )
+)
+
+call :log "Build frontend React/Vite..."
+call npm run build
+if errorlevel 1 (
+  call :fail "Build frontend that bai. Khong khoi dong fallback Jinja cu."
+  goto :end
+)
+if not exist "%PROJECT_DIR%dist\index.html" (
+  call :fail "Khong tim thay dist\index.html sau khi build frontend."
+  goto :end
+)
+call :log "Frontend React da build tai %PROJECT_DIR%dist"
 
 call :log "Nap du lieu mau SQLite..."
 "%PYTHON%" "%PROJECT_DIR%seed.py"
