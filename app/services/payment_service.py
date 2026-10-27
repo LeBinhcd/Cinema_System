@@ -6,7 +6,24 @@ from app.models.payment import PaymentModel
 from app.services.screening_rules import as_datetime, sales_open
 
 BASE_PRICES = {"STANDARD": 80000, "VIP": 110000, "COUPLE": 160000}
-METHODS = {"VNPAY", "MOMO", "DOMESTIC_CARD"}
+
+BOOKING_CODE_PREFIX = "CV-"
+BOOKING_CODE_DIGITS = 5
+METHODS = {"VNPAY", "MOMO"}
+
+
+
+def create_short_booking_code(model):
+    """Create a human-friendly code and guard against collisions."""
+    for _ in range(20):
+        code = BOOKING_CODE_PREFIX + ''.join(secrets.choice('0123456789') for _ in range(BOOKING_CODE_DIGITS))
+        exists = model.connection.execute(
+            "SELECT 1 FROM payments WHERE booking_id=? UNION SELECT 1 FROM tickets WHERE booking_code=? LIMIT 1",
+            (code, code),
+        ).fetchone()
+        if not exists:
+            return code
+    raise RuntimeError("Không thể tạo mã đặt chỗ duy nhất.")
 
 
 class PaymentService:
@@ -26,14 +43,17 @@ class PaymentService:
             return order
 
     @staticmethod
-    def process(hold_id, user_id, method, success):
+    def process(hold_id, user_id, method, success, saved_card_id=None):
         if method not in METHODS:
             return None, "Cổng thanh toán không hợp lệ."
         with PaymentModel.transaction() as model:
             seats = model.hold_group(hold_id, user_id)
             if not seats:
                 return None, "Giữ ghế không tồn tại hoặc không thuộc tài khoản."
-            code = seats[0]['group_code'] or "CV-" + uuid.uuid4().hex.upper()
+            if saved_card_id is not None and not model.connection.execute('SELECT 1 FROM saved_cards WHERE id=? AND user_id=?',(saved_card_id,user_id)).fetchone():
+                return None, 'Thẻ đã lưu không thuộc tài khoản.'
+            code = create_short_booking_code(model)
+
             if any(as_datetime(s['expires_at']) <= datetime.now()
                    or not sales_open(s['start_time'], datetime.now()) for s in seats):
                 for seat in seats:

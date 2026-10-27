@@ -1,38 +1,152 @@
+import secrets
+import uuid
+
 """Browser pages for the read-only preview."""
+from pathlib import Path
+from flask import send_from_directory
+
 from flask import Blueprint, abort, current_app, flash, jsonify, render_template, request, session, redirect, url_for
 from sqlite3 import IntegrityError
 from hmac import compare_digest
-from app.auth import admin_required, staff_required
+from app.auth import admin_required, staff_required, customer_required
 from app.services.preview_service import PreviewService
+from app.services.external_movie_metadata import ExternalMetadataError
 from app.services.catalog_service import CatalogService
+
 from app.services.seat_map_service import SeatMapService
 from app.services.payment_service import BASE_PRICES, PaymentService
 from app.services.ticket_service import TicketService
 from app.services.admin_service import AdminService
 from app.services.staff_service import StaffService
+from app.database import get_connection
 from app.services.movie_service import MovieService
 
+from app.services.auth_service import AuthService
+
 pages_bp = Blueprint("pages", __name__)
+
+
+def spa_index():
+    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
+    if frontend_index.exists():
+        return send_from_directory(frontend_index.parent, 'index.html')
+    return None
+
+
+@pages_bp.get('/api/checkout/<int:hold_id>')
+@customer_required
+def checkout_api(hold_id):
+    if not session.get('user_id'):
+        return jsonify({'error': 'Vui lòng đăng nhập.'}), 401
+    order = PaymentService.checkout(hold_id, session['user_id'])
+    if order is None:
+        return jsonify({'error': 'Giữ ghế không tồn tại hoặc đã hết hạn.'}), 404
+    for key in ('expires_at', 'start_time'):
+        if hasattr(order.get(key), 'isoformat'):
+            order[key] = order[key].isoformat(sep=' ')
+    return jsonify(order)
+
+
+@pages_bp.get('/api/tickets')
+@customer_required
+def tickets_api():
+    if not session.get('user_id'):
+        return jsonify({'error': 'Vui lòng đăng nhập.'}), 401
+    if session.get('role') != 'CUSTOMER':
+        return jsonify({'error': 'Chỉ khách hàng mới có lịch sử vé.'}), 403
+    return jsonify({'tickets': TicketService.history(session['user_id'])})
+
+@pages_bp.get('/api/ticket/<booking_code>')
+@customer_required
+def ticket_api(booking_code):
+    if not session.get('user_id'):
+        return jsonify({'error': 'Vui lòng đăng nhập.'}), 401
+    ticket_data = TicketService.get(booking_code, session['user_id'])
+    if ticket_data is None:
+        return jsonify({'error': 'Không tìm thấy vé.'}), 404
+    return jsonify(ticket_data)
+
 
 
 @pages_bp.get("/")
 @pages_bp.get("/movies")
 def index():
+    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
+    if frontend_index.exists():
+        return send_from_directory(frontend_index.parent, 'index.html')
     return render_template("index.html", movies=[m for m in CatalogService.movies() if m["status"] == "SHOWING"],
                            screenings=[s for s in CatalogService.screenings() if s["sales_open"]])
 
 
+
+
+
+
+@pages_bp.get('/api/saved-cards')
+@customer_required
+def saved_cards():
+    if not session.get('user_id'):
+        return jsonify(error='Vui lòng đăng nhập.'), 401
+    with get_connection() as db:
+        rows=db.execute('SELECT id,cardholder_name,brand,last4,created_at FROM saved_cards WHERE user_id=? ORDER BY id DESC',(session['user_id'],)).fetchall()
+    return jsonify({'cards':[dict(row) for row in rows]})
+
+@pages_bp.post('/api/saved-cards')
+@customer_required
+def add_saved_card():
+    if not session.get('user_id'):
+        return jsonify(error='Vui lòng đăng nhập.'), 401
+    if not compare_digest(request.headers.get('X-CSRF-Token',''),session.get('csrf_token','')):
+        return jsonify(error='Mã xác nhận không hợp lệ.'),403
+    data=request.get_json(silent=True) or {}; cardholder=str(data.get('cardholder_name','')).strip(); brand=str(data.get('brand','')).strip().upper(); last4=str(data.get('last4','')).strip()
+    if len(cardholder)<2 or brand not in {'VISA','MASTERCARD','JCB','NAPAS'} or not last4.isdigit() or len(last4)!=4:
+        return jsonify(error='Thông tin thẻ demo không hợp lệ.'),400
+    token='CARD-'+secrets.token_urlsafe(24)
+    with get_connection() as db:
+        row=db.execute('INSERT INTO saved_cards(user_id,cardholder_name,brand,last4,token) VALUES(?,?,?,?,?)',(session['user_id'],cardholder,brand,last4,token));db.commit(); card_id=row.lastrowid
+    return jsonify({'id':card_id,'cardholder_name':cardholder,'brand':brand,'last4':last4}),201
+
+@pages_bp.delete('/api/saved-cards/<int:card_id>')
+@customer_required
+def delete_saved_card(card_id):
+    if not session.get('user_id'):
+        return jsonify(error='Vui lòng đăng nhập.'),401
+    if not compare_digest(request.headers.get('X-CSRF-Token',''),session.get('csrf_token','')):
+        return jsonify(error='Mã xác nhận không hợp lệ.'),403
+    with get_connection() as db:
+        deleted=db.execute('DELETE FROM saved_cards WHERE id=? AND user_id=?',(card_id,session['user_id'])).rowcount;db.commit()
+    return jsonify({'deleted':bool(deleted)}) if deleted else (jsonify(error='Không tìm thấy thẻ.'),404)
+
+@pages_bp.get('/api/catalog')
+def catalog_api():
+    movies=CatalogService.movies(); screenings=CatalogService.screenings()
+    for item in movies: item.pop('metadata_json',None)
+    for item in screenings:
+        for key in ('start_time','end_time'):
+            if item.get(key) is not None: item[key]=item[key].isoformat(sep=' ')
+    return jsonify({'movies':[m for m in movies if m.get('status') in ('SHOWING','COMING_SOON')],'screenings':[s for s in screenings if s.get('sales_open')],'csrf_token':session.get('csrf_token'),'user':({'id':session.get('user_id'),'name':session.get('full_name'),'email':session.get('email'),'user_code':session.get('user_code'),'role':session.get('role')} if session.get('user_id') else None)})
+
+@pages_bp.get('/assets/<path:filename>')
+def frontend_assets(filename):
+    assets_dir = Path(current_app.root_path).parent / 'dist' / 'assets'
+    return send_from_directory(assets_dir, filename)
+
+
 @pages_bp.get("/movie/<int:movie_id>")
 def movie(movie_id):
-    movie = next((m for m in CatalogService.movies() if m["id"] == movie_id), None)
-    if movie is None:
+    movie_data = next((m for m in CatalogService.movies() if m["id"] == movie_id), None)
+    if movie_data is None:
         abort(404)
-    return render_template("movie.html", movie=movie, screenings=[s for s in CatalogService.screenings()
+    if spa_index():
+        return spa_index()
+    return render_template("movie.html", movie=movie_data, screenings=[s for s in CatalogService.screenings()
                            if s["movie_id"] == movie_id and s["sales_open"]])
 
 
 @pages_bp.get("/booking/<int:screening_id>")
 def booking(screening_id):
+    if spa_index():
+        return spa_index()
     screening = SeatMapService.get_for_screening(screening_id)
     if screening is None:
         abort(404)
@@ -41,12 +155,18 @@ def booking(screening_id):
 
 @pages_bp.get("/login")
 def login():
+    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
+    if frontend_index.exists():
+        return send_from_directory(frontend_index.parent, 'index.html')
     return render_template("login.html", show_demo_accounts=current_app.config["APP_ENV"].lower() in ("development", "demo", "testing"))
 
 
 @pages_bp.get("/admin")
 @admin_required
 def dashboard():
+    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
+    if frontend_index.exists():
+        return send_from_directory(frontend_index.parent, 'index.html')
     return render_template("admin.html", movies=CatalogService.movies(),
                            screenings=CatalogService.screenings(), drafts=CatalogService.drafts(), rooms=AdminService.rooms())
 
@@ -91,6 +211,8 @@ def generate_movie_description():
         return jsonify(success=True, description=description)
     except ValueError as exc:
         return jsonify(success=False, error=str(exc)), 400
+    except ExternalMetadataError as exc:
+        return jsonify(success=False, error=str(exc), code='EXTERNAL_METADATA_ERROR'), 503
     except RuntimeError as exc:
         return jsonify(success=False, error=str(exc)), 503
     except Exception:
@@ -177,9 +299,38 @@ def revenue_ai_summary():
         return jsonify(success=False, error='Không thể tạo nhận xét AI lúc này.'), 503
 
 
+
+@pages_bp.get('/api/staff/lookup')
+@staff_required
+def staff_lookup_api():
+    return jsonify({'tickets': StaffService.lookup(request.args.get('q', ''))})
+
+@pages_bp.get('/api/staff/screenings')
+@staff_required
+def staff_screenings_api():
+
+    return jsonify({'screenings': StaffService.screenings_today()})
+
+@pages_bp.post('/api/admin/staff')
+@admin_required
+def create_staff_api():
+    data=request.get_json(silent=True) or {}
+    try:
+        account=AuthService.create_staff(data.get('full_name'),data.get('email'),data.get('password'))
+        return jsonify(account),201
+    except ValueError as exc:
+        return jsonify(error=str(exc)),400
+
+@pages_bp.get('/api/admin/dashboard')
+@admin_required
+def admin_dashboard_api():
+    return jsonify({'movies': CatalogService.movies(), 'screenings': CatalogService.screenings(), 'rooms': AdminService.rooms(), 'drafts': CatalogService.drafts()})
 @pages_bp.get("/staff")
 @staff_required
 def staff():
+    frontend_index = Path(current_app.root_path).parent / 'dist' / 'index.html'
+    if frontend_index.exists():
+        return send_from_directory(frontend_index.parent, 'index.html')
     query = request.args.get("q", "").strip()
     return render_template("staff.html", query=query, tickets=StaffService.lookup(query), screenings=StaffService.screenings_today(), prices=BASE_PRICES)
 
@@ -234,6 +385,7 @@ def staff_ticket(booking_code):
 
 
 @pages_bp.post("/api/booking/hold-seat")
+@customer_required
 def hold_seat():
     if not session.get("user_id"):
         return jsonify({"error": "Vui lòng đăng nhập để giữ ghế."}), 401
@@ -254,9 +406,12 @@ def hold_seat():
 
 
 @pages_bp.get("/checkout/<int:hold_id>")
+@customer_required
 def checkout(hold_id):
     if not session.get("user_id"):
         return redirect(url_for("pages.login"))
+    if spa_index():
+        return spa_index()
     order = PaymentService.checkout(hold_id, session["user_id"])
     if order is None:
         abort(404, description="Giữ ghế không tồn tại hoặc đã hết hạn.")
@@ -264,9 +419,12 @@ def checkout(hold_id):
 
 
 @pages_bp.get("/ticket/<booking_code>")
+@customer_required
 def ticket(booking_code):
     if not session.get("user_id"):
         return redirect(url_for("pages.login"))
+    if spa_index():
+        return spa_index()
     ticket_data = TicketService.get(booking_code, session["user_id"])
     if ticket_data is None:
         abort(404)
@@ -274,7 +432,10 @@ def ticket(booking_code):
 
 
 @pages_bp.get('/my-tickets')
+@customer_required
 def my_tickets():
+    if session.get('user_id') and session.get('role') == 'CUSTOMER' and spa_index():
+        return spa_index()
     if not session.get('user_id'):
         return redirect(url_for('pages.login'))
     if session.get('role') != 'CUSTOMER':
@@ -282,7 +443,9 @@ def my_tickets():
     return render_template('my_tickets.html', tickets=TicketService.history(session['user_id']))
 
 
+
 @pages_bp.post("/api/payment/process")
+@customer_required
 def process_payment():
     if not session.get("user_id"):
         return jsonify({"error": "Vui lòng đăng nhập."}), 401
@@ -291,13 +454,58 @@ def process_payment():
     data = request.get_json(silent=True)
     if not isinstance(data, dict) or type(data.get("hold_id")) is not int or type(data.get("success")) is not bool or not isinstance(data.get("payment_method"), str):
         return jsonify({"error": "Yêu cầu hold_id số nguyên, success boolean và payment_method."}), 400
-    result, error = PaymentService.process(data["hold_id"], session["user_id"], data["payment_method"], data["success"])
+    result, error = PaymentService.process(data["hold_id"], session["user_id"], data["payment_method"], data["success"], data.get('saved_card_id'))
     if error:
         return jsonify({"error": error}), 409
     return jsonify(result)
 
 
+@pages_bp.get('/api/refund-requests')
+def refund_requests_api():
+    if not session.get('user_id'):
+        return jsonify(error='Vui lòng đăng nhập.'), 401
+    with get_connection() as db:
+        if session.get('role') == 'ADMIN':
+            rows=db.execute('''SELECT r.*,u.full_name,u.email FROM refund_requests r JOIN users u ON u.id=r.user_id WHERE r.status='PENDING' ORDER BY r.created_at DESC''').fetchall()
+        else:
+            rows=db.execute('SELECT * FROM refund_requests WHERE user_id=? ORDER BY created_at DESC',(session['user_id'],)).fetchall()
+    return jsonify({'requests':[dict(x) for x in rows]})
+
+@pages_bp.post('/api/refund-requests')
+@customer_required
+def create_refund_request():
+    if not session.get('user_id'):
+        return jsonify(error='Vui lòng đăng nhập.'), 401
+    if not compare_digest(request.headers.get('X-CSRF-Token',''),session.get('csrf_token','')):
+        return jsonify(error='Mã xác nhận không hợp lệ.'),403
+    data=request.get_json(silent=True) or {}; code=str(data.get('booking_code','')).strip(); reason=str(data.get('reason','')).strip()
+    if not code:return jsonify(error='Thiếu mã đặt chỗ.'),400
+    with get_connection() as db:
+        ticket=db.execute('SELECT booking_code FROM tickets WHERE booking_code=? AND user_id=? LIMIT 1',(code,session['user_id'])).fetchone()
+        if not ticket:return jsonify(error='Vé không tồn tại hoặc không thuộc tài khoản.'),404
+        pending=db.execute("SELECT 1 FROM refund_requests WHERE booking_code=? AND status='PENDING'",(code,)).fetchone()
+        if pending:return jsonify(error='Vé đã có yêu cầu đang chờ xử lý.'),409
+        req='RF-'+uuid.uuid4().hex[:8].upper();db.execute('INSERT INTO refund_requests(request_code,booking_code,user_id,reason) VALUES(?,?,?,?)',(req,code,session['user_id'],reason));db.commit()
+    return jsonify({'request_code':req,'booking_code':code,'status':'PENDING','message':'Đã gửi yêu cầu; chờ Admin xác minh hoàn tiền.'}),201
+
+@pages_bp.post('/api/admin/refund-requests/<int:request_id>/decision')
+@admin_required
+def refund_decision(request_id):
+    if not compare_digest(request.headers.get('X-CSRF-Token',''),session.get('csrf_token','')):
+        return jsonify(error='Mã xác nhận không hợp lệ.'),403
+    data=request.get_json(silent=True) or {}; decision=data.get('decision')
+    if decision not in ('APPROVED','REJECTED'):return jsonify(error='Quyết định không hợp lệ.'),400
+    with get_connection() as db:
+        req=db.execute("SELECT * FROM refund_requests WHERE id=? AND status='PENDING'",(request_id,)).fetchone()
+        if not req:return jsonify(error='Yêu cầu không tồn tại hoặc đã xử lý.'),404
+        if decision=='APPROVED':
+            db.execute("UPDATE payments SET status='REFUNDED' WHERE booking_id=? AND status='SUCCESS'",(req['booking_code'],))
+            db.execute("UPDATE tickets SET status='CANCELLED' WHERE booking_code=? AND status='BOOKED'",(req['booking_code'],))
+        db.execute("UPDATE refund_requests SET status=?,reviewed_by=?,reviewed_at=datetime('now','localtime') WHERE id=?", (decision, session['user_id'], request_id)); db.commit()
+    return jsonify({'request_id':request_id,'status':decision,'booking_code':req['booking_code']})
+
 @pages_bp.post('/api/ticket/cancel')
+@customer_required
 def cancel_ticket():
     if not session.get('user_id'):
         return jsonify({'error': 'Vui lòng đăng nhập.'}), 401

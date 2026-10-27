@@ -1,5 +1,4 @@
-﻿flask
+flask
 mysql-connector-python
 python-dotenv
-groq
 pytest

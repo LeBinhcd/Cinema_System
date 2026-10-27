@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=CineVista Cinema System
+Comment=Khởi động hệ thống quản lý rạp CineVista
+Path=/home/lebinh/Dự án AI/Cinema_System
+Exec=/bin/bash /home/lebinh/Dự án AI/Cinema_System/start_cinema.sh
+Icon=/home/lebinh/Dự án AI/Cinema_System/app/static/images/poster.svg
+Terminal=true
+StartupNotify=true
+Categories=Development;
+

@@ -34,7 +34,18 @@ _SEAT_TYPES = (
     ("STANDARD", ("ghế thường", "ghe thuong", "ghế standard", "ghe standard", "standard")),
 )
 
+UNSAFE_MESSAGE = "Xin lỗi, tôi không thể thực hiện yêu cầu này."
+
+_UNSAFE_TERMS = (
+    "xóa database", "xoa database", "drop table", "delete from", "sql injection",
+    "mật khẩu", "mat khau", "api key", "secret key", "password_hash",
+    "bỏ qua phân quyền", "bo qua phan quyen", "vượt quyền", "vuot quyen",
+    "sửa dữ liệu gốc", "sua du lieu goc", "xóa vé người khác", "xoa ve nguoi khac",
+    "đọc database", "doc database", "truy cập database", "truy cap database",
+    "prompt injection", "bỏ qua quy tắc", "bo qua quy tac",
+)
 _OUT_OF_SCOPE_TERMS = (
+
     "thời tiết", "thoi tiet", "chứng khoán", "chung khoan", "bóng đá", "bong da",
     "tin tức", "tin tuc", "lập trình", "lap trinh",
 )
@@ -83,7 +94,7 @@ def _extract_movie_title(question: str, folded: str, genre: Optional[str]) -> Op
         if genre and any(_contains(_fold(title), variant) for normalized, variants in _GENRES
                          if normalized == genre for variant in variants):
             return None
-        if title and _fold(title) not in {"gì", "gi", "nào", "nao", "này", "nay"}:
+        if title and _fold(title) not in {"gì", "gi", "nào", "nao", "này", "nay", "gì đang được", "gi dang duoc"} and not any(_contains(_fold(title), word) for word in ("đang được", "dang duoc", "đang chiếu", "dang chieu")):
             return title
     return None
 
@@ -95,7 +106,7 @@ def _extract_keywords(question: str, genre: Optional[str], movie_title: Optional
         "mình", "minh", "xin", "hỏi", "hoi", "suất", "suat", "chiếu", "chieu", "tối", "toi", "nay",
         "hôm", "hom", "ngày", "ngay", "mai", "sau", "trước", "truoc", "lúc", "luc", "buổi", "buoi",
         "ghế", "ghe", "còn", "con", "bao", "nhiêu", "nhieu", "giá", "gia", "vé", "ve", "hủy", "huy",
-        "hoàn", "hoan", "tiền", "tien", "về", "ve", "tối", "toi",
+        "đang", "duoc", "được", "chiếu", "chieu", "trình", "trinh", "chiếu", "showing",
     }
     result: list[str] = []
     for token in re.findall(r"[\wÀ-ỹ-]+", question, flags=re.UNICODE):
@@ -123,6 +134,10 @@ class QuestionAnalyzer:
         text = _fold(original)
         today = _current_local_date(now)
         result = QuestionAnalyzer._empty()
+
+        if any(term in text for term in _UNSAFE_TERMS):
+            result["intent"] = "UNSAFE"
+            return result
 
         if any(term in text for term in _OUT_OF_SCOPE_TERMS):
             result["intent"] = "UNKNOWN"

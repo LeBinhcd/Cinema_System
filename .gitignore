@@ -8,4 +8,12 @@ venv/
 cinema.db
 cinema.db-journal
 cinema.db-wal
-cinema.db-shm
+node_modules/
+dist/
+*.db.backup-*
+*.db.backup
+cinevista.log
+cinevista-windows.log
+pytest-collection.txt
+app/models/*.tmp
+

@@ -70,7 +70,11 @@ def retrieve_screenings(intent: Mapping[str, Any], *, now: Optional[datetime] = 
     if clock.tzinfo is not None:
         clock = clock.astimezone(VIETNAM_TIMEZONE).replace(tzinfo=None)
     checked_at = clock.isoformat(sep=" ", timespec="microseconds")
-    params = dict(filters, checked_at=checked_at, limit=MAX_RESULTS)
+    # For movie-list questions, limit by a safe larger screening window so one
+    # movie's repeated showtimes cannot hide other movies. The response layer
+    # still de-duplicates movie names; specific showtime queries remain capped.
+    result_limit = 50 if intent.get("intent") == "recommend_movie" and not filters["movie_title"] else MAX_RESULTS
+    params = dict(filters, checked_at=checked_at, limit=result_limit)
     if filters["movie_title"]:
         escaped = filters["movie_title"].replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         params["movie_title"] = "%" + escaped + "%"

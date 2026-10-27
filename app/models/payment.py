@@ -93,7 +93,7 @@ class PaymentModel:
 
     def find_tickets(self, query):
         return self.connection.execute("""SELECT t.booking_code,t.status,t.qr_code,t.price,t.created_at,
-            u.email,u.phone,m.title,s.start_time,se.row_label,se.seat_number
+            u.full_name,u.email,u.phone,m.title,s.start_time,se.row_label,se.seat_number
             FROM tickets t JOIN users u ON u.id=t.user_id JOIN screenings s ON s.id=t.screening_id
             JOIN movies m ON m.id=s.movie_id JOIN seats se ON se.id=t.seat_id
             WHERE LOWER(t.booking_code)=? OR t.qr_code=? OR u.phone=? ORDER BY t.created_at DESC LIMIT 50""", (query.lower(), query, query)).fetchall()

@@ -12,7 +12,16 @@ class AdminModel(PreviewModel):
             movie_columns = connection.execute('PRAGMA table_info(movies)').fetchall()
             if movie_columns and 'age_rating' not in {row['name'] for row in movie_columns}:
                 connection.execute("ALTER TABLE movies ADD COLUMN age_rating TEXT NOT NULL DEFAULT 'P' CHECK(age_rating IN ('P','K','T13','T16','T18','C'))")
+            connection.execute('''CREATE TABLE IF NOT EXISTS refund_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, request_code TEXT NOT NULL UNIQUE, booking_code TEXT NOT NULL, user_id INTEGER NOT NULL, reason TEXT, status TEXT NOT NULL DEFAULT 'PENDING', reviewed_by INTEGER, reviewed_at TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+            user_columns = {row['name'] for row in connection.execute('PRAGMA table_info(users)').fetchall()}
+            if user_columns and 'user_code' not in user_columns:
+                connection.execute('ALTER TABLE users ADD COLUMN user_code TEXT')
+                connection.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_user_code ON users(user_code)")
             columns = connection.execute('PRAGMA table_info(screening_rooms)').fetchall()
+            card_columns = {row['name'] for row in connection.execute('PRAGMA table_info(saved_cards)').fetchall()}
+            if not card_columns:
+                connection.execute('''CREATE TABLE IF NOT EXISTS saved_cards (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL REFERENCES users(id),cardholder_name TEXT NOT NULL,brand TEXT NOT NULL,last4 TEXT NOT NULL,token TEXT NOT NULL UNIQUE,created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+
             if columns and 'status' not in {row['name'] for row in columns}:
                 connection.execute("ALTER TABLE screening_rooms ADD COLUMN status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE','MAINTENANCE'))")
             draft_columns = {row['name'] for row in connection.execute('PRAGMA table_info(ai_contents)').fetchall()}

@@ -22,6 +22,8 @@ def create_demo_app(database_path=None):
         'SQLITE_PATH': str(database_path or ROOT / 'cinema.db'),
         'SECRET_KEY': os.getenv('SECRET_KEY') or secrets.token_hex(32),
         'SESSION_COOKIE_SECURE': False,
+        'SESSION_COOKIE_NAME': 'cinevista_session_' + secrets.token_hex(8),
+
     })
     from app.services.demo_bootstrap import prepare_demo
     prepare_demo(application)

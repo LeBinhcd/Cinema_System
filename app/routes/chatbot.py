@@ -32,6 +32,10 @@ def chat():
     try:
         result = process_chat(question)
         return jsonify({"answer": result["answer"], "cards": result["cards"]}), 200
+    except RuntimeError as error:
+        if str(error) == "Xin lỗi, dịch vụ tư vấn hiện chưa được cấu hình. Vui lòng thử lại sau.":
+            return jsonify({"error": str(error)}), 503
+        return jsonify({"error": "Xin lỗi, hệ thống tư vấn hiện chưa thể xử lý yêu cầu. Vui lòng thử lại sau."}), 500
+
     except Exception:
-        # Deliberately do not expose provider, database, prompt, or traceback details.
         return jsonify({"error": "Xin lỗi, hệ thống tư vấn hiện chưa thể xử lý yêu cầu. Vui lòng thử lại sau."}), 500

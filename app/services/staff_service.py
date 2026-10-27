@@ -4,7 +4,7 @@ import secrets
 import uuid
 
 from app.models.staff import StaffModel
-from app.services.payment_service import BASE_PRICES
+from app.services.payment_service import BASE_PRICES, create_short_booking_code
 from app.services.screening_rules import SALES_CUTOFF_MINUTES, as_datetime, sales_open
 from app.services.ticket_service import TicketService
 
@@ -39,7 +39,7 @@ class StaffService:
             seats = model.counter_seats(screening_id, seat_ids)
             if len(seats) != len(seat_ids) or any(model.paid(screening_id, s['id']) or model.active_hold(screening_id, s['id']) for s in seats):
                 return None, 'Một hoặc nhiều ghế vừa được bán/đang được giữ.'
-            code = 'POS-' + uuid.uuid4().hex[:10].upper()
+            code = create_short_booking_code(model)
             customer = model.counter_customer(name.strip(), phone.strip() if isinstance(phone, str) and phone.strip() else None, code)
             amount = sum(BASE_PRICES.get(s['seat_type'], 0) for s in seats)
             model.create_payment(code, amount, method, 'SUCCESS', 'POS-' + uuid.uuid4().hex.upper())
