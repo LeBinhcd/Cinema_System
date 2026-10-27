@@ -26,7 +26,9 @@ class CatalogService:
         for show in screenings:
             show["start_time"] = as_datetime(show["start_time"])
             show["end_time"] = as_datetime(show["end_time"])
-            show["sales_open"] = sales_open(show["start_time"], now)
+            # Keep future/current screenings visible so customers can see the
+            # room. Booking/hold endpoints still enforce the 15-minute cutoff.
+            show["sales_open"] = now < show["end_time"]
         return screenings
 
     @staticmethod

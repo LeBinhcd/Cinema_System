@@ -106,6 +106,35 @@ class AdminModel(PreviewModel):
         return self.connection.execute('INSERT INTO screenings(movie_id,room_id,start_time,end_time) VALUES(?,?,?,?)',
                                        (movie_id, room_id, start.isoformat(sep=' '), end.isoformat(sep=' '))).lastrowid
 
+    def screening_delete_dependencies(self, screening_id):
+        row = self.connection.execute(
+            """SELECT
+                (SELECT COUNT(*) FROM tickets WHERE screening_id=?) AS tickets,
+                (SELECT COUNT(*) FROM seat_holds WHERE screening_id=?) AS holds""",
+            (screening_id, screening_id),
+        ).fetchone()
+        return dict(row)
+
+    def delete_screening(self, screening_id):
+        return self.connection.execute(
+            'DELETE FROM screenings WHERE id=?', (screening_id,)
+        ).rowcount == 1
+
+    def movie_delete_dependencies(self, movie_id):
+        row = self.connection.execute(
+            """SELECT
+                (SELECT COUNT(*) FROM screenings WHERE movie_id=?) AS screenings,
+                (SELECT COUNT(*) FROM tickets t JOIN screenings s ON s.id=t.screening_id WHERE s.movie_id=?) AS tickets,
+                (SELECT COUNT(*) FROM seat_holds h JOIN screenings s ON s.id=h.screening_id WHERE s.movie_id=?) AS holds""",
+            (movie_id, movie_id, movie_id),
+        ).fetchone()
+        return dict(row)
+
+    def delete_movie(self, movie_id):
+        self.connection.execute('DELETE FROM movie_genres WHERE movie_id=?', (movie_id,))
+        self.connection.execute('DELETE FROM ai_contents WHERE movie_id=?', (movie_id,))
+        return self.connection.execute('DELETE FROM movies WHERE id=?', (movie_id,)).rowcount == 1
+
     @staticmethod
     def revenue_report(from_date, to_date):
         connection = get_connection()

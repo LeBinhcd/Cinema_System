@@ -49,6 +49,13 @@ def tickets_api():
         return jsonify({'error': 'Chỉ khách hàng mới có lịch sử vé.'}), 403
     return jsonify({'tickets': TicketService.history(session['user_id'])})
 
+@pages_bp.get('/api/tickets/watched')
+@customer_required
+def watched_tickets_api():
+    if session.get('role') != 'CUSTOMER':
+        return jsonify({'error': 'Chỉ khách hàng mới có lịch sử đã xem.'}), 403
+    return jsonify({'watched': TicketService.watched_history(session['user_id'])})
+
 @pages_bp.get('/api/ticket/<booking_code>')
 @customer_required
 def ticket_api(booking_code):
@@ -183,6 +190,32 @@ def toggle_movie(movie_id):
 @admin_required
 def add_screening():
     return admin_action(lambda: AdminService.add_screening(request.form), 'Đã thêm suất chiếu.', 'screenings')
+
+@pages_bp.delete('/admin/screenings/<int:screening_id>')
+@admin_required
+def delete_screening(screening_id):
+    token = session.get('csrf_token')
+    supplied = request.headers.get('X-CSRF-Token', '')
+    if not token or not compare_digest(supplied.encode(), token.encode()):
+        return jsonify(success=False, error='Mã xác nhận không hợp lệ; hãy tải lại trang.'), 403
+    try:
+        AdminService.delete_screening(screening_id)
+        return jsonify(success=True, message='Đã xóa suất chiếu.')
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+@pages_bp.delete('/admin/movies/<int:movie_id>')
+@admin_required
+def delete_movie(movie_id):
+    token = session.get('csrf_token')
+    supplied = request.headers.get('X-CSRF-Token', '')
+    if not token or not compare_digest(supplied.encode(), token.encode()):
+        return jsonify(success=False, error='Mã xác nhận không hợp lệ; hãy tải lại trang.'), 403
+    try:
+        AdminService.delete_movie(movie_id)
+        return jsonify(success=True, message='Đã xóa phim.')
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
 
 @pages_bp.post('/admin/rooms/add')
 @admin_required

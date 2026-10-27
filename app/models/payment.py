@@ -64,6 +64,16 @@ class PaymentModel:
             WHERE t.user_id=? AND t.booking_code IS NOT NULL
             ORDER BY t.created_at DESC,t.id DESC''', (user_id,)).fetchall()
 
+    def watched_movies_for_user(self, user_id):
+        return self.connection.execute("""SELECT m.id AS movie_id, m.title, s.start_time,
+            t.status, t.checked_in_at,
+            (SELECT GROUP_CONCAT(g.name, ', ') FROM genres g JOIN movie_genres mg
+             ON mg.genre_id=g.id WHERE mg.movie_id=m.id) AS genres
+            FROM tickets t JOIN screenings s ON s.id=t.screening_id JOIN movies m ON m.id=s.movie_id
+            WHERE t.user_id=? AND t.status IN ('USED','CHECKED_IN')
+            GROUP BY t.booking_code, m.id, m.title, s.start_time, t.status, t.checked_in_at
+            ORDER BY COALESCE(t.checked_in_at, s.start_time) DESC""", (user_id,)).fetchall()
+
     def refund(self, booking_code):
         return self.connection.execute(
             "UPDATE payments SET status='REFUNDED' WHERE booking_id=? AND status='SUCCESS'",

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 import re
 from app.services import context_builder, gemini_service, prompt_builder, question_analyzer, screening_retriever
+from app.database import get_connection
 
 def _card_from_screening(screening: Mapping) -> dict:
     sid = screening["screening_id"]
@@ -38,16 +39,27 @@ def _grounded(answer, rows):
 
 def _compact_context(screenings: list[dict], intent: Mapping) -> list[dict]:
     """Send only facts relevant to the question; cards remain full backend data."""
-    if intent.get("intent") == "recommend_movie" and not intent.get("movie_title"):
-        seen = set(); compact = []
-        for row in screenings:
-            key = row.get("movie_id") or row.get("movie_title")
-            if key not in seen:
-                seen.add(key)
-                compact.append({"screening_id": row["screening_id"], "movie_id": row.get("movie_id"), "movie_title": row["movie_title"]})
-        return compact
+    # The context builder validates the complete screening contract. Keep full
+    # rows here; the response layer de-duplicates movie names, while RAG still
+    # receives room/time/seat facts and cannot fail on a partial row.
     return screenings
-def process_chat(user_question: str) -> dict:
+def _preference_context(user_id):
+    if not user_id:
+        return ""
+    with get_connection() as db:
+        rows = db.execute("""SELECT m.title,
+            (SELECT GROUP_CONCAT(g.name, ', ') FROM genres g JOIN movie_genres mg
+             ON mg.genre_id=g.id WHERE mg.movie_id=m.id) genres
+            FROM tickets t JOIN screenings s ON s.id=t.screening_id JOIN movies m ON m.id=s.movie_id
+            WHERE t.user_id=? AND t.status IN ('USED','CHECKED_IN')
+            GROUP BY m.id,m.title ORDER BY COUNT(*) DESC LIMIT 5""", (user_id,)).fetchall()
+    if not rows:
+        return ""
+    return "Lịch sử đã xem của khách (chỉ dùng để cá nhân hóa): " + "; ".join(
+        f"{row['title']} ({row['genres'] or 'chưa rõ thể loại'})" for row in rows
+    )
+
+def process_chat(user_question: str, user_id=None) -> dict:
     if not isinstance(user_question, str) or not user_question.strip():
         raise ValueError("user_question must be a non-empty string")
     intent = question_analyzer.analyze_question(user_question)
@@ -57,6 +69,9 @@ def process_chat(user_question: str) -> dict:
         return {"answer": "Xin lỗi, tôi chỉ hỗ trợ thông tin về phim, suất chiếu, ghế và chính sách của rạp.", "cards": []}
     rows = screening_retriever.retrieve_screenings(intent)
     context = context_builder.build_context(_compact_context(rows, intent), intent)
+    preferences = _preference_context(user_id)
+    if preferences:
+        context += "\n" + preferences
     prompt = prompt_builder.build_prompt(context, user_question)
     try:
         answer = gemini_service.generate_response(prompt)

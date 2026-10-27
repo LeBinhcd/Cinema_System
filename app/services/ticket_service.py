@@ -27,6 +27,11 @@ class TicketService:
                 for seats in groups.values()]
 
     @staticmethod
+    def watched_history(user_id):
+        with PaymentModel.transaction() as model:
+            return [dict(row) for row in model.watched_movies_for_user(user_id)]
+
+    @staticmethod
     def get(booking_code, user_id=None):
         with PaymentModel.transaction() as model:
             seats = model.ticket_group(booking_code)

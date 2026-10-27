@@ -144,3 +144,30 @@ class AdminService:
             end = start + timedelta(minutes=movie['duration_minutes'])
             validate_schedule(start, end, model.room_screenings(room_id))
             return model.add_screening(movie_id, room_id, start, end)
+
+    @staticmethod
+    def delete_screening(screening_id):
+        screening_id = AdminService.positive(screening_id, 'Suất chiếu')
+        with AdminModel.transaction() as model:
+            screening = model.connection.execute(
+                'SELECT id FROM screenings WHERE id=?', (screening_id,)
+            ).fetchone()
+            if not screening:
+                raise ValueError('Suất chiếu không tồn tại.')
+            dependencies = model.screening_delete_dependencies(screening_id)
+            if dependencies['tickets'] or dependencies['holds']:
+                raise ValueError('Không thể xóa suất đã có vé hoặc ghế đang được giữ.')
+            if not model.delete_screening(screening_id):
+                raise ValueError('Không thể xóa suất chiếu.')
+
+    @staticmethod
+    def delete_movie(movie_id):
+        movie_id = AdminService.positive(movie_id, 'Phim')
+        with AdminModel.transaction() as model:
+            if not model.movie_details(movie_id):
+                raise ValueError('Phim không tồn tại.')
+            dependencies = model.movie_delete_dependencies(movie_id)
+            if dependencies['screenings'] or dependencies['tickets'] or dependencies['holds']:
+                raise ValueError('Không thể xóa phim còn suất chiếu, vé hoặc ghế đang được giữ.')
+            if not model.delete_movie(movie_id):
+                raise ValueError('Không thể xóa phim.')

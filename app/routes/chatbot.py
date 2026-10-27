@@ -30,7 +30,7 @@ def chat():
         return jsonify({"error": "Mã xác nhận không hợp lệ; hãy tải lại trang."}), 403
 
     try:
-        result = process_chat(question)
+        result = process_chat(question, session.get('user_id'))
         return jsonify({"answer": result["answer"], "cards": result["cards"]}), 200
     except RuntimeError as error:
         if str(error) == "Xin lỗi, dịch vụ tư vấn hiện chưa được cấu hình. Vui lòng thử lại sau.":
