@@ -234,18 +234,18 @@ def update_movie_react(movie_id):
 def toggle_movie(movie_id):
     return admin_action(lambda: AdminService.toggle_movie(movie_id), 'Đã đổi trạng thái phim.', 'movies')
 
+@pages_bp.post('/admin/screenings/add')
 @admin_required
 def add_screening():
     return admin_action(lambda: AdminService.add_screening(request.form), 'Đã thêm suất chiếu.', 'screenings')
-
 
 @pages_bp.post('/admin/rooms/add')
 @admin_required
 def add_room():
     return admin_action(lambda: AdminService.add_room(request.form), 'Đã tạo phòng và toàn bộ ghế.', 'rooms')
 
-
 @pages_bp.post('/admin/rooms/<int:room_id>/toggle-status')
+
 @admin_required
 def toggle_room(room_id):
     return admin_action(lambda: AdminService.toggle_room(room_id), 'Đã đổi trạng thái phòng.', 'rooms')
