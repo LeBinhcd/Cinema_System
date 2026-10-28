@@ -23,7 +23,7 @@ def register():
     if not isinstance(data, dict):
         return jsonify(error='Expected JSON object'), 400
     try:
-        account = AuthService.register_customer(data.get('full_name'), data.get('email'), data.get('password'))
+        account = AuthService.register_customer(data.get('full_name'), data.get('email'), data.get('phone'), data.get('password'))
     except ValueError as exc:
         return jsonify(error=str(exc)), 400
     session.clear()
@@ -41,7 +41,7 @@ def login():
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return jsonify({"error": "Expected JSON object"}), 400
-    account = AuthService.authenticate(data.get("email"), data.get("password"))
+    account = AuthService.authenticate(data.get("identifier"), data.get("password"))
     if account is None:
         session.clear()
         return jsonify({"error": "Invalid credentials"}), 401

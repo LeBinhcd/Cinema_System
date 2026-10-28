@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from secrets import compare_digest
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, current_app, jsonify, request, session
 
 from app.services.chatbot_service import process_chat
 
@@ -33,9 +33,11 @@ def chat():
         result = process_chat(question, session.get('user_id'))
         return jsonify({"answer": result["answer"], "cards": result["cards"]}), 200
     except RuntimeError as error:
+        current_app.logger.error("Chatbot runtime failure: %s", str(error)[:300])
         if str(error) == "Xin lỗi, dịch vụ tư vấn hiện chưa được cấu hình. Vui lòng thử lại sau.":
             return jsonify({"error": str(error)}), 503
         return jsonify({"error": "Xin lỗi, hệ thống tư vấn hiện chưa thể xử lý yêu cầu. Vui lòng thử lại sau."}), 500
 
-    except Exception:
+    except Exception as error:
+        current_app.logger.exception("Chatbot request failed: %s", type(error).__name__)
         return jsonify({"error": "Xin lỗi, hệ thống tư vấn hiện chưa thể xử lý yêu cầu. Vui lòng thử lại sau."}), 500

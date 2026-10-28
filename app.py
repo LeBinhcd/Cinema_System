@@ -16,17 +16,20 @@ load_dotenv(ROOT / '.env')
 
 
 def create_demo_app(database_path=None):
-    application = create_app({
-        'APP_ENV': 'development',
-        'DB_ENGINE': 'sqlite',
-        'SQLITE_PATH': str(database_path or ROOT / 'cinema.db'),
+    engine = os.getenv('DB_ENGINE', 'sqlite').lower()
+    config = {
+        'APP_ENV': os.getenv('APP_ENV', 'development'),
+        'DB_ENGINE': engine,
         'SECRET_KEY': os.getenv('SECRET_KEY') or secrets.token_hex(32),
         'SESSION_COOKIE_SECURE': False,
         'SESSION_COOKIE_NAME': 'cinevista_session_' + secrets.token_hex(8),
-
-    })
-    from app.services.demo_bootstrap import prepare_demo
-    prepare_demo(application)
+    }
+    if engine == 'sqlite':
+        config['SQLITE_PATH'] = str(database_path or ROOT / 'cinema.db')
+    application = create_app(config)
+    if engine == 'sqlite':
+        from app.services.demo_bootstrap import prepare_demo
+        prepare_demo(application)
     return application
 
 

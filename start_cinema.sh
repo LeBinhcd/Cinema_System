@@ -3,7 +3,7 @@ set -Eeuo pipefail
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 cd -- "$PROJECT_DIR"
 LOG_FILE="${CINEVISTA_LOG_FILE:-$PROJECT_DIR/cinevista.log}"
-export PYTHONUNBUFFERED=1 APP_ENV="${APP_ENV:-development}" DB_ENGINE=sqlite SQLITE_PATH="${SQLITE_PATH:-$PROJECT_DIR/cinema.db}"
+export PYTHONUNBUFFERED=1 APP_ENV="${APP_ENV:-development}" DB_ENGINE="${DB_ENGINE:-sqlite}" SQLITE_PATH="${SQLITE_PATH:-$PROJECT_DIR/cinema.db}"
 export LOG_LEVEL="${LOG_LEVEL:-INFO}"
 export CINEVISTA_LOG_HTTP="${CINEVISTA_LOG_HTTP:-1}"
 mkdir -p "$(dirname -- "$LOG_FILE")"
@@ -44,7 +44,7 @@ say 'Build frontend React/Vite...'; (cd "$PROJECT_DIR/app/frontend" && npm run b
 [[ -f "$PROJECT_DIR/app/frontend/dist/index.html" ]] || fail 'Không tạo được dist/index.html; dừng để không chạy frontend cũ.'
 say 'Frontend React đã build xong.'
 
-say 'Nạp dữ liệu mẫu SQLite...'; "$PYTHON" "$PROJECT_DIR/seed.py"
+if [[ "${DB_ENGINE}" == "sqlite" ]]; then say 'Nạp dữ liệu mẫu SQLite...'; "$PYTHON" "$PROJECT_DIR/seed.py"; fi
 
 # Giữ tối đa 5 bản backup tự động gần nhất; không đụng các backup thủ công.
 mapfile -t STARTUP_BACKUPS < <(find "$PROJECT_DIR" -maxdepth 1 -type f -name 'cinema.db.backup-startup-*' -printf '%f\n' | sort -r)

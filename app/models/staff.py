@@ -19,7 +19,7 @@ class StaffModel(PaymentModel):
             connection.close()
 
     def screening(self, screening_id):
-        return self.connection.execute('''SELECT s.id,s.start_time,r.status AS room_status
+            return self.connection.execute('''SELECT s.id,s.movie_id,s.start_time,r.status AS room_status
             FROM screenings s JOIN screening_rooms r ON r.id=s.room_id WHERE s.id=?''',
             (screening_id,)).fetchone()
 

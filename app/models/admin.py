@@ -13,6 +13,22 @@ class AdminModel(PreviewModel):
             if movie_columns and 'age_rating' not in {row['name'] for row in movie_columns}:
                 connection.execute("ALTER TABLE movies ADD COLUMN age_rating TEXT NOT NULL DEFAULT 'P' CHECK(age_rating IN ('P','K','T13','T16','T18','C'))")
             connection.execute('''CREATE TABLE IF NOT EXISTS refund_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, request_code TEXT NOT NULL UNIQUE, booking_code TEXT NOT NULL, user_id INTEGER NOT NULL, reason TEXT, status TEXT NOT NULL DEFAULT 'PENDING', reviewed_by INTEGER, reviewed_at TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+            connection.execute('''CREATE TABLE IF NOT EXISTS pricing_rules (
+                seat_type TEXT PRIMARY KEY CHECK(seat_type IN ('STANDARD','VIP','COUPLE')),
+                price NUMERIC NOT NULL CHECK(price >= 0),
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )''')
+            connection.execute('''CREATE TABLE IF NOT EXISTS movie_pricing_rules (
+                movie_id INTEGER NOT NULL REFERENCES movies(id),
+                seat_type TEXT NOT NULL CHECK(seat_type IN ('STANDARD','VIP','COUPLE')),
+                price NUMERIC NOT NULL CHECK(price >= 0),
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(movie_id, seat_type)
+            )''')
+            connection.executemany(
+                'INSERT OR IGNORE INTO pricing_rules(seat_type, price) VALUES(?, ?)',
+                [('STANDARD', 80000), ('VIP', 110000), ('COUPLE', 160000)],
+            )
             user_columns = {row['name'] for row in connection.execute('PRAGMA table_info(users)').fetchall()}
             if user_columns and 'user_code' not in user_columns:
                 connection.execute('ALTER TABLE users ADD COLUMN user_code TEXT')
@@ -170,3 +186,42 @@ class AdminModel(PreviewModel):
                 FROM screening_rooms r LEFT JOIN seats s ON s.room_id=r.id GROUP BY r.id ORDER BY r.name""")]
         finally:
             connection.close()
+
+    @staticmethod
+    def pricing_rules():
+        connection = get_connection()
+        try:
+            return [dict(row) for row in connection.execute(
+                'SELECT seat_type, price, updated_at FROM pricing_rules ORDER BY CASE seat_type WHEN \'STANDARD\' THEN 1 WHEN \'VIP\' THEN 2 ELSE 3 END'
+            )]
+        finally:
+            connection.close()
+
+    def update_pricing_rule(self, seat_type, price):
+        return self.connection.execute(
+            "UPDATE pricing_rules SET price=?, updated_at=datetime('now','localtime') WHERE seat_type=?",
+            (price, seat_type),
+        ).rowcount == 1
+
+    @staticmethod
+    def movie_pricing(movie_id):
+        connection = get_connection()
+        try:
+            return [dict(row) for row in connection.execute(
+                "SELECT movie_id, seat_type, price, updated_at FROM movie_pricing_rules WHERE movie_id=? "
+                "ORDER BY CASE seat_type WHEN 'STANDARD' THEN 1 WHEN 'VIP' THEN 2 ELSE 3 END",
+                (movie_id,),
+            )]
+        finally:
+            connection.close()
+
+    def update_movie_pricing(self, movie_id, seat_type, price):
+        exists = self.connection.execute('SELECT 1 FROM movies WHERE id=?', (movie_id,)).fetchone()
+        if not exists:
+            return False
+        self.connection.execute(
+            "INSERT INTO movie_pricing_rules(movie_id,seat_type,price,updated_at) VALUES(?,?,?,datetime('now','localtime')) "
+            "ON CONFLICT(movie_id,seat_type) DO UPDATE SET price=excluded.price, updated_at=excluded.updated_at",
+            (movie_id, seat_type, price),
+        )
+        return True

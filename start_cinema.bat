@@ -7,6 +7,8 @@ cd /d "%PROJECT_DIR%"
 set "LOG_FILE=%PROJECT_DIR%cinevista-windows.log"
 set "PYTHON=%PROJECT_DIR%.venv\Scripts\python.exe"
 set "PIP=%PROJECT_DIR%.venv\Scripts\pip.exe"
+set "DB_ENGINE=sqlite"
+set "SQLITE_PATH=%PROJECT_DIR%cinema.db"
 
 call :log "=============================================="
 call :log "CineVista Windows Launcher"

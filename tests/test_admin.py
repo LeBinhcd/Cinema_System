@@ -26,6 +26,58 @@ def setup_catalog(app):
     return movie, room
 
 
+def test_admin_can_update_base_ticket_price_and_customer_checkout_uses_new_price(app, client):
+    response = client.get('/api/admin/pricing')
+    assert response.status_code == 200
+    assert {row['seat_type']: row['price'] for row in response.json['pricing']} == {
+        'STANDARD': 80000, 'VIP': 110000, 'COUPLE': 160000,
+    }
+
+    response = client.put('/api/admin/pricing/VIP', json={'price': 125000},
+                          headers={'X-CSRF-Token': 'admin-test'})
+    assert response.status_code == 200
+    assert response.json == {'seat_type': 'VIP', 'price': 125000}
+
+    response = client.put('/api/admin/pricing/VIP', json={'price': -1},
+                          headers={'X-CSRF-Token': 'admin-test'})
+    assert response.status_code == 400
+
+    with client.session_transaction() as session:
+        session['role'] = 'CUSTOMER'
+    assert client.put('/api/admin/pricing/VIP', json={'price': 1},
+                      headers={'X-CSRF-Token': 'admin-test'}).status_code == 403
+
+
+def test_admin_can_update_movie_specific_price_and_fallback_is_available(app, client):
+    movie, _ = setup_catalog(app)
+
+    response = client.get(f'/api/admin/movies/{movie}/pricing')
+    assert response.status_code == 200
+    assert response.json['pricing'] == []
+
+    response = client.put(f'/api/admin/movies/{movie}/pricing/VIP',
+                          json={'price': 135000}, headers={'X-CSRF-Token': 'admin-test'})
+    assert response.status_code == 200
+    assert response.json == {'movie_id': movie, 'seat_type': 'VIP', 'price': 135000}
+
+    response = client.get(f'/api/admin/movies/{movie}/pricing')
+    assert response.status_code == 200
+    assert response.json['pricing'][0]['seat_type'] == 'VIP'
+    assert response.json['pricing'][0]['price'] == 135000
+
+    response = client.put(f'/api/admin/movies/{movie}/pricing/STANDARD',
+                          json={'price': -100}, headers={'X-CSRF-Token': 'admin-test'})
+    assert response.status_code == 400
+
+    response = client.put(f'/api/admin/movies/{movie}/pricing/VIP',
+                          json={'price': 1}, headers={'X-CSRF-Token': 'wrong'})
+    assert response.status_code == 403
+
+    with client.session_transaction() as session:
+        session['role'] = 'CUSTOMER'
+    assert client.get(f'/api/admin/movies/{movie}/pricing').status_code == 403
+
+
 @pytest.mark.parametrize('path', ['/admin/movies/add', '/admin/movies/1/toggle-status',
                                   '/admin/screenings/add', '/admin/rooms/add',
                                   '/admin/rooms/1/toggle-status', '/admin/drafts/1/approved'])

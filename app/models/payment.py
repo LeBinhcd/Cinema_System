@@ -23,7 +23,7 @@ class PaymentModel:
 
     def hold_order(self, hold_id, user_id):
         return self.connection.execute("""SELECT h.id,h.user_id,h.screening_id,h.seat_id,h.expires_at,h.group_code,
-            s.start_time,s.end_time,m.title AS movie_title,r.name AS room_name,
+            s.start_time,s.end_time,m.id AS movie_id,m.title AS movie_title,r.name AS room_name,
             se.row_label,se.seat_number,se.seat_type
             FROM seat_holds h JOIN screenings s ON s.id=h.screening_id
             JOIN movies m ON m.id=s.movie_id JOIN screening_rooms r ON r.id=s.room_id

@@ -75,3 +75,14 @@ def test_read_only_seat_map(app, monkeypatch):
         assert len(PreviewService.lookup("0900000003")) == 1
         assert len(PreviewService.lookup("TEST-QR")) == 1
         assert PreviewService.lookup("0900000002") == []
+def test_staff_and_admin_cannot_login_by_phone(app, monkeypatch):
+    from app.models.user import UserModel
+    from werkzeug.security import generate_password_hash
+    monkeypatch.setattr(UserModel, 'find_by_identifier', lambda value: {
+        'id': 1, 'email': 'admin@example.com', 'phone': '0900000001',
+        'full_name': 'Admin', 'user_code': None, 'role': 'ADMIN',
+        'password_hash': generate_password_hash('valid-password')
+    } if value in ('0900000001', 'admin@example.com') else None)
+    client = app.test_client()
+    assert client.post('/api/auth/login', json={'identifier': '0900000001', 'password': 'valid-password'}).status_code == 401
+    assert client.post('/api/auth/login', json={'identifier': 'admin@example.com', 'password': 'valid-password'}).status_code == 200

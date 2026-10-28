@@ -4,6 +4,7 @@ import secrets
 import uuid
 from app.models.payment import PaymentModel
 from app.services.screening_rules import as_datetime, sales_open
+from app.services.pricing_service import PricingService
 
 BASE_PRICES = {"STANDARD": 80000, "VIP": 110000, "COUPLE": 160000}
 
@@ -34,12 +35,13 @@ class PaymentService:
             if not seats or any(as_datetime(s['expires_at']) <= datetime.now()
                                 or not sales_open(s['start_time'], datetime.now()) for s in seats):
                 return None
-            if any(s['seat_type'] not in BASE_PRICES for s in seats):
+            prices = PricingService.effective_prices(model.connection, seats[0]['movie_id'])
+            if any(s['seat_type'] not in prices for s in seats):
                 return None
             order = dict(seats[0])
             order['id'] = hold_id
             order['seats'] = seats
-            order["price"] = sum(BASE_PRICES[s['seat_type']] for s in seats)
+            order["price"] = sum(prices[s['seat_type']] for s in seats)
             return order
 
     @staticmethod
@@ -59,9 +61,10 @@ class PaymentService:
                 for seat in seats:
                     model.release_hold(seat['id'], user_id)
                 return None, "Giữ ghế đã hết hạn."
-            if any(s['seat_type'] not in BASE_PRICES for s in seats):
+            prices = PricingService.effective_prices(model.connection, seats[0]['movie_id'])
+            if any(s['seat_type'] not in prices for s in seats):
                 return None, 'Loại ghế chưa có bảng giá.'
-            price = sum(BASE_PRICES[s['seat_type']] for s in seats)
+            price = sum(prices[s['seat_type']] for s in seats)
             if not success:
                 model.create_payment(code, price, method, "FAILED", "MOCK-" + uuid.uuid4().hex.upper())
                 for seat in seats:
@@ -71,5 +74,5 @@ class PaymentService:
                 return None, "Ghế đã được bán."
             model.create_payment(code, price, method, "SUCCESS", "MOCK-" + uuid.uuid4().hex.upper())
             for seat in seats:
-                model.issue_ticket(seat, code, "CINE-QR-" + secrets.token_urlsafe(32), BASE_PRICES[seat['seat_type']])
+                model.issue_ticket(seat, code, "CINE-QR-" + secrets.token_urlsafe(32), prices[seat['seat_type']])
             return {"booking_code": code}, None

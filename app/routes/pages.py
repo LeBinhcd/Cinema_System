@@ -22,6 +22,7 @@ from app.database import get_connection
 from app.services.movie_service import MovieService
 
 from app.services.auth_service import AuthService
+from app.services.pricing_service import PricingService
 
 pages_bp = Blueprint("pages", __name__)
 
@@ -309,7 +310,43 @@ def create_staff_api():
 @pages_bp.get('/api/admin/dashboard')
 @admin_required
 def admin_dashboard_api():
-    return jsonify({'movies': CatalogService.movies(), 'screenings': CatalogService.screenings(), 'rooms': AdminService.rooms(), 'drafts': CatalogService.drafts()})
+    return jsonify({'movies': CatalogService.movies(), 'screenings': CatalogService.screenings(), 'rooms': AdminService.rooms(), 'drafts': CatalogService.drafts(), 'pricing': PricingService.list_prices()})
+
+
+@pages_bp.get('/api/admin/pricing')
+@admin_required
+def admin_pricing():
+    return jsonify({'pricing': PricingService.list_prices()})
+
+
+@pages_bp.put('/api/admin/pricing/<seat_type>')
+@admin_required
+def update_admin_pricing(seat_type):
+    if not compare_digest(request.headers.get('X-CSRF-Token', ''), session.get('csrf_token', '')):
+        return jsonify(error='Mã xác nhận không hợp lệ.'), 403
+    data = request.get_json(silent=True) or {}
+    try:
+        return jsonify(PricingService.update(seat_type, data.get('price')))
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 400
+
+
+@pages_bp.get('/api/admin/movies/<int:movie_id>/pricing')
+@admin_required
+def admin_movie_pricing(movie_id):
+    return jsonify({'pricing': PricingService.movie_prices(movie_id)})
+
+
+@pages_bp.put('/api/admin/movies/<int:movie_id>/pricing/<seat_type>')
+@admin_required
+def update_admin_movie_pricing(movie_id, seat_type):
+    if not compare_digest(request.headers.get('X-CSRF-Token', ''), session.get('csrf_token', '')):
+        return jsonify(error='Mã xác nhận không hợp lệ.'), 403
+    data = request.get_json(silent=True) or {}
+    try:
+        return jsonify(PricingService.update_movie_price(movie_id, seat_type, data.get('price')))
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 400
 def staff_csrf():
     token = session.get('csrf_token')
     if not token or not compare_digest(request.headers.get('X-CSRF-Token', ''), token):

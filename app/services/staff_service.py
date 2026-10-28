@@ -7,6 +7,7 @@ from app.models.staff import StaffModel
 from app.services.payment_service import BASE_PRICES, create_short_booking_code
 from app.services.screening_rules import SALES_CUTOFF_MINUTES, as_datetime, sales_open
 from app.services.ticket_service import TicketService
+from app.services.pricing_service import PricingService
 
 
 class StaffService:
@@ -41,10 +42,13 @@ class StaffService:
                 return None, 'Một hoặc nhiều ghế vừa được bán/đang được giữ.'
             code = create_short_booking_code(model)
             customer = model.counter_customer(name.strip(), phone.strip() if isinstance(phone, str) and phone.strip() else None, code)
-            amount = sum(BASE_PRICES.get(s['seat_type'], 0) for s in seats)
+            prices = PricingService.effective_prices(model.connection, show['movie_id'])
+            if any(s['seat_type'] not in prices for s in seats):
+                return None, 'Loại ghế chưa có bảng giá.'
+            amount = sum(prices[s['seat_type']] for s in seats)
             model.create_payment(code, amount, method, 'SUCCESS', 'POS-' + uuid.uuid4().hex.upper())
             for seat in seats:
-                model.create_counter_ticket(customer, screening_id, seat['id'], BASE_PRICES[seat['seat_type']], code, 'CINE-QR-' + secrets.token_urlsafe(20))
+                model.create_counter_ticket(customer, screening_id, seat['id'], prices[seat['seat_type']], code, 'CINE-QR-' + secrets.token_urlsafe(20))
             model.store_counter_contact(code, name.strip(), phone.strip() if isinstance(phone, str) and phone.strip() else None, staff_id)
             return {'booking_code': code}, None
 
